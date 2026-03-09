@@ -20,6 +20,8 @@ N_SIMS <- if (length(nsims_arg)) as.integer(nsims_arg[1]) else 25
 fit_on_pop <- REFIT
 run_full_simulation <- N_SIMS > 0
 
+set.seed(82520)
+
 source("code/ces-simulations/00-simulation-functions.R")
 
 
@@ -313,7 +315,7 @@ for (n in par_n) {
                outcome = gsub("(_est|_true)$", "", name)) |> 
         select(-name) |> 
         pivot_wider(names_from = tmp, values_from = value) |> 
-        filter(outcome == outcomes2[c(1, 2)]) |> 
+        filter(outcome %in% outcomes2[c(1, 2)]) |> 
         mutate(error = est - true)
       
       errors <- state_est |> 
