@@ -82,7 +82,7 @@ Rscript code/michigan-validation/04-michigan-diagnostics.R 2>&1 | tee -a "$LOG"
 echo "[6/9] Running prior sensitivity analysis..."
 Rscript code/michigan-validation/05-prior-sensitivity.R $REFIT_FLAG 2>&1 | tee -a "$LOG"
 
-echo "[7/9] Running plugin vs. Bayes comparison..."
+echo "[7/9] Running plugin vs. Bayes comparison (always refits model)..."
 Rscript code/michigan-validation/06-plugin-vs-bayes.R 2>&1 | tee -a "$LOG"
 
 # ---- CES simulation pipeline ----

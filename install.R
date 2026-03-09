@@ -28,6 +28,10 @@ cran_pkgs <- c(
   "dataverse",
   "arrow",
   "haven",
+  "survey",
+  "questionr",
+  "lqmm",
+  "GGally",
   "remotes"
 )
 

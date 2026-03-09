@@ -145,7 +145,8 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 | Figure C.2 | `output/figures/model-diagnostics/mi-trace-lp.pdf` | `04-michigan-diagnostics.R` |
 | Figure C.3 | `output/figures/model-diagnostics/mi-trace-cty-intercept.pdf` | `04-michigan-diagnostics.R` |
 | Tables D.1-D.4 | `output/tables/michigan-empirical-*.tex`, `michigan-modeled-*.tex` | `02-run-michigan.R` |
-| Figures E.1-E.2 | `output/figures/mrsp-*.pdf` | `02-run-michigan.R` |
+| Figure E.1 | `output/figures/mrsp-comparison.pdf` | `02-run-michigan.R` |
+| Figure E.2 | `output/figures/error-density-mrsp-comparison.pdf` | `02-run-michigan.R` |
 | Table E.1 | `output/tables/mrsp-error-reduction.tex` | `02-run-michigan.R` |
 | Figures G.1-G.2 | `output/figures/michigan-prior-sensitivity-*.pdf` | `05-prior-sensitivity.R` |
 | Figure H.1 | `output/figures/mi-precinct-elections.pdf` | `03-michigan-precinct.R` |
@@ -154,6 +155,9 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 | Figure I.1 | `output/figures/ces-simulation-results.pdf` | `03-summarize-ces-sims.R` |
 | Table I.1 | `output/tables/ces-simulation-rmse-reduction.tex` | `03-summarize-ces-sims.R` |
 | Table I.2 | `output/tables/ces-population-correlations.tex` | `02-ces-simulations.R` |
+| Table I.3 | `output/tables/ces-sim-full-regression.tex` | `02-ces-simulations.R` |
+| Table I.4 | `output/tables/ces-population-re-correlations.tex` | `02-ces-simulations.R` (only with `--refit`) |
+| Appendix J | Console output (no saved files) | `06-plugin-vs-bayes.R` |
 
 ### Inline Statistics
 
