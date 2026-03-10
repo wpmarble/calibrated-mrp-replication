@@ -4,7 +4,8 @@
 
 **Paper:** "Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities"
 **Authors:** William Marble and Joshua Clinton
-**Journal:** *Political Analysis* (forthcoming)
+**Journal:** *Political Analysis* 
+**Date:** March 9, 2026
 
 This archive contains all code and data needed to reproduce the results in the paper.
 
@@ -34,7 +35,7 @@ CES files are too large to bundle. The script `data-raw/download-ces-data.R` dow
 
 The following raw data sources were used to construct the processed datasets above. They are not required to run the replication but are documented for transparency. See `data-raw/README.md` for details.
 
-- IPUMS USA (ACS 5-Year microdata): https://usa.ipums.org
+- IPUMS USA (ACS 5-Year microdata)
 - MIT Election Data + Science Lab (county presidential returns): https://doi.org/10.7910/DVN/VOQCHQ
 - McDonald turnout data: https://www.electproject.org
 - NHGIS (county and state demographic tables): https://nhgis.org

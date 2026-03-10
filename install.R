@@ -32,6 +32,8 @@ cran_pkgs <- c(
   "questionr",
   "lqmm",
   "GGally",
+  "Hmisc",
+  "rstan",
   "remotes"
 )
 

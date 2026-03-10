@@ -17,7 +17,7 @@ REFIT <- "--refit" %in% args
 nsims_arg <- setdiff(args, "--refit")
 N_SIMS <- if (length(nsims_arg)) as.integer(nsims_arg[1]) else 25
 
-fit_on_pop <- REFIT
+fit_on_pop <- FALSE  # population model not used in paper; extremely slow to fit
 run_full_simulation <- N_SIMS > 0
 
 set.seed(82520)

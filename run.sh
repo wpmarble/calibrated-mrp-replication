@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/local/bin/bash
 # =============================================================================
 # Replication script for:
 #   Marble & Clinton (forthcoming, Political Analysis)
@@ -20,7 +20,7 @@
 #   ./run.sh --refit --nsims 25    # Full replication from scratch
 # =============================================================================
 
-set -e  # Exit on error
+set -eo pipefail  # Exit on error, including pipeline failures
 
 # Parse arguments
 REFIT_FLAG=""
@@ -58,49 +58,55 @@ mkdir -p output/figures/model-diagnostics output/tables/numbers-in-text log
 
 # Start log
 LOG="log/replication-log.txt"
-echo "Replication started: $(date)" > "$LOG"
-echo "Options: refit=${REFIT_FLAG:-no} nsims=${NSIMS}" >> "$LOG"
-echo "" >> "$LOG"
+> "$LOG"  # truncate log on each run
+log() { echo "$@" | tee -a "$LOG"; }
+
+log "Replication started: $(date)"
+log "Options: refit=${REFIT_FLAG:-no} nsims=${NSIMS}"
+log ""
+
+# ---- Log session info ----
+log "[0/9] Logging session info... $(date)"
+Rscript code/session-info.R 2>&1 | tee -a "$LOG"
 
 # ---- Download CES data (needed for CES simulation pipeline) ----
-echo "[1/9] Downloading CES data (if needed)..."
+log "[1/9] Downloading CES data (if needed)... $(date)"
 Rscript data-raw/download-ces-data.R 2>&1 | tee -a "$LOG"
 
 # ---- Michigan validation pipeline ----
-echo "[2/9] Preparing Michigan data..."
+log "[2/9] Preparing Michigan data... $(date)"
 Rscript code/michigan-validation/01-prep-data-michigan.R 2>&1 | tee -a "$LOG"
 
-echo "[3/9] Running Michigan validation (main analysis)..."
+log "[3/9] Running Michigan validation (main analysis)... $(date)"
 Rscript code/michigan-validation/02-run-michigan.R $REFIT_FLAG 2>&1 | tee -a "$LOG"
 
-echo "[4/9] Running Michigan precinct validation..."
+log "[4/9] Running Michigan precinct validation... $(date)"
 Rscript code/michigan-validation/03-michigan-precinct.R $REFIT_FLAG 2>&1 | tee -a "$LOG"
 
-echo "[5/9] Running Michigan model diagnostics..."
+log "[5/9] Running Michigan model diagnostics... $(date)"
 Rscript code/michigan-validation/04-michigan-diagnostics.R 2>&1 | tee -a "$LOG"
 
-echo "[6/9] Running prior sensitivity analysis..."
+log "[6/9] Running prior sensitivity analysis... $(date)"
 Rscript code/michigan-validation/05-prior-sensitivity.R $REFIT_FLAG 2>&1 | tee -a "$LOG"
 
-echo "[7/9] Running plugin vs. Bayes comparison (always refits model)..."
+log "[7/9] Running plugin vs. Bayes comparison (always refits model)... $(date)"
 Rscript code/michigan-validation/06-plugin-vs-bayes.R 2>&1 | tee -a "$LOG"
 
 # ---- CES simulation pipeline ----
-echo "[8/9] Preparing CES data..."
+log "[8/9] Preparing CES data... $(date)"
 Rscript code/ces-simulations/01-prep-ces.R 2>&1 | tee -a "$LOG"
 
 if [ "$NSIMS" -gt 0 ]; then
-  echo "[8b/9] Running CES simulations (N_SIMS=$NSIMS)..."
+  log "[8b/9] Running CES simulations (N_SIMS=$NSIMS)... $(date)"
   Rscript code/ces-simulations/02-ces-simulations.R $REFIT_FLAG $NSIMS 2>&1 | tee -a "$LOG"
 else
-  echo "[8b/9] Skipping CES simulations (using frozen results)."
+  log "[8b/9] Skipping CES simulations (using frozen results)."
 fi
 
-echo "[9/9] Summarizing CES simulation results..."
+log "[9/9] Summarizing CES simulation results... $(date)"
 Rscript code/ces-simulations/03-summarize-ces-sims.R 2>&1 | tee -a "$LOG"
 
-echo ""
-echo "============================================="
-echo "Replication complete: $(date)"
-echo "============================================="
-echo "Replication complete: $(date)" >> "$LOG"
+log ""
+log "============================================="
+log "Replication complete: $(date)"
+log "============================================="
