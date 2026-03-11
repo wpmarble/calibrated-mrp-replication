@@ -12,7 +12,6 @@ theme_set(theme_classic() +
                   strip.text = element_text(size = 16),
                   legend.text = element_text(size = 14)))
 
-# warning("TEST CODE BELOW!! REPLACE WITH REAL CODE")
 res <- readRDS("data/frozen/ces-simulation-results_frozen.rds")
 res <- bind_rows(res)
 
@@ -22,8 +21,6 @@ res <- res |>
     outcome == "envirocarbon" ~ "Regulate CO$_2$"
   ))
 
-# res <- bind_rows(
-  # res, res |> mutate(n = 1000), res |> mutate(n = 1000, DNR = "Strong DNR"))
 
 res_wide <- res |>
   pivot_wider(values_from = c(mae, rmse), names_from = "type")
@@ -67,16 +64,11 @@ rmse_summary |>
 
 
 
-# ggplot(state_est) + 
-#   aes(x = envirocarbon_true, y = envirocarbon_est) + 
-#   geom_abline(slope = 1, intercept = 0) + 
-#   geom_point() + 
-#   facet_wrap(~ type)
+
 
 
 ggplot(res) + 
   aes(y = rmse, x = factor(n), colour = type) + 
-  # geom_point(position = position_jitter(.1)) + 
   geom_violin() + 
   facet_grid(DNR ~ outcome)
 

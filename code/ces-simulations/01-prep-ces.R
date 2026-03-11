@@ -265,19 +265,8 @@ cces$spending_infrastructure <- -1 * cces$spending_infrastructure + 1
 #   - spending_infrastructure - this is a 1-5 scale, dichotomozize at 3. Cor -0.18
 cor(cces$spending_infrastructure, cces$pres_dem, use = "pa")
 
-## Strategy: fit a model to generate p_i for each item. These baseline 
-## probabilities are then used to simulate a population,  where I tune the
-## corrrelation structure using a copula-based approach
+## Baseline models 
 rhs <- ~ agegrp * race + gender * educ 
-
-# replace NAs in predictors with a "missing" level. 
-# update actually this was screwing up simulations due to samples
-# that didn't have any missingness. 
-# cces <- cces %>% 
-#   mutate(across(c(agegrp, race, gender, educ, state),
-#                 ~ as.factor(case_when(is.na(.x) ~ "missing",
-#                                       TRUE ~ .x))))
-
 
 m1 <- glm(update.formula(enviro_carbon ~ ., rhs),
           weights = cces$weight_cumulative,
@@ -299,7 +288,6 @@ m5 <- glm(update.formula(pres_dnv ~ ., rhs),
           weights = cces$weight_cumulative,
                     data = cces,
                     family = "binomial")
-
 
 # generate baseline predicted values
 predm1 <- predict(m1, newdata = cces, type = "response")

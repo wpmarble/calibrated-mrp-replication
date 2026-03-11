@@ -5,7 +5,7 @@
 **Paper:** "Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities"
 **Authors:** William Marble and Joshua Clinton
 **Journal:** *Political Analysis* 
-**Date:** March 9, 2026
+**Date:** March 11, 2026
 
 This archive contains all code and data needed to reproduce the results in the paper.
 
@@ -13,14 +13,14 @@ This archive contains all code and data needed to reproduce the results in the p
 
 | Data Source | Provided | Notes |
 |---|---|---|
-| SurveyMonkey 2022 River Sample | Yes | `data/survey/CleanedSM_Weighted.rds` |
+| SurveyMonkey 2022  Sample | Yes | `data/survey/CleanedSM_Weighted.rds` |
+| County-level election results | Yes | `data/elections/` |
+| Michigan 2022 precinct results | Yes | `data/michigan-precincts/michigan22.csv` |
 | ACS 5-Year Estimates (poststratification tables) | Yes | `data/poststrat/` (pre-processed from IPUMS USA) |
 | County demographic data (NHGIS) | Yes | `data/census/nhgis*.csv` |
 | County/state FIPS lookups | Yes | `data/census/*-fips.csv` |
-| County-level election results | Yes | `data/elections/` |
-| Michigan 2022 precinct results | Yes | `data/michigan-precincts/michigan22.csv` |
 | Cooperative Election Study (CES) | Downloaded on demand | Large files from Harvard Dataverse; see below |
-| Frozen model fits | Yes | `data/frozen/` (pre-estimated Bayesian models) |
+| Frozen model fits | Yes | `data/frozen/` (pre-estimated `brms` model fits, can re-create if desired) |
 
 ### CES Data
 
@@ -46,13 +46,14 @@ Scripts used to process these raw sources are included in `data-raw/` for transp
 
 - **R version:** 4.3 or later
 - **Stan/cmdstan:** Required backend for `brms`. Installed via `cmdstanr::install_cmdstan()`.
-- **R packages:** See `install.R` for the complete list. Key packages: `brms`, `cmdstanr`, `calibratedMRP` (installed from GitHub: `wpmarble/calibratedMRP`), `tidyverse`, `kableExtra`, `fixest`, `texreg`.
-- **Memory:** ~16 GB RAM recommended
-- **Cores:** 4+ cores recommended (models use 4 parallel chains)
+- **R packages:** The methods proposed in the paper are implemented in the `calibratedMRP`, available to install from GitHub: `wpmarble/calibratedMRP`. Other key packages: `brms`, `cmdstanr`, `tidyverse`, `kableExtra`, `fixest`, `texreg`. See `install.R` for the complete list. 
+- **Memory:** at least 16 GB RAM recommended
+- **Cores:** 4+ cores recommended
+- **Replication environment:** We last ran this archive on a Mac Studio with Apple Silicon M4 Max process and 64GB memory. Our runtime estimates are based on this environment.
 - **Estimated runtime:**
-  - Default (frozen model fits): ~30 minutes
-  - With `--refit` (re-estimate all Bayesian models): ~4-8 hours
-  - With `--nsims 25` (run CES simulations, 25 reps per configuration): several days
+  - Full replication includes `--refit` and `--nsims 25` flags. This re-estimates all models from data and runs CES simulations (Appendix I, 25 reps per configuration). This takes roughly 17-18 hours.
+  - With just `--refit` (re-estimate all Bayesian models, not including simulations): 2-3 hours
+  - Default (frozen `brms` model fits): ~30 minutes
 
 ## Instructions
 
@@ -68,11 +69,8 @@ Rscript install.R
 # Default: use frozen model fits, skip CES simulations
 ./run.sh
 
-# Re-estimate all Bayesian models from scratch
+# Re-estimate all Bayesian models from scratch, don't conduct simulations
 ./run.sh --refit
-
-# Run CES simulations with 25 replications per configuration
-./run.sh --nsims 25
 
 # Full replication (re-estimate everything + simulations)
 ./run.sh --refit --nsims 25
@@ -82,7 +80,7 @@ All scripts are run from the `replication-files/` root directory. Output is writ
 
 ### Frozen Model Fits
 
-By default, pre-estimated model fits in `data/frozen/` are used to avoid long computation times. Pass `--refit` to re-estimate all Bayesian models. Results should be substantively identical (minor MCMC variation expected).
+By default, pre-estimated model fits in `data/frozen/` are used to avoid long computation times. Pass `--refit` to re-estimate all Bayesian models. Results should be substantively identical.
 
 ## Code Description
 
@@ -90,20 +88,20 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 
 | File | Description |
 |---|---|
-| `code/functions.R` | Shared utility functions (z-scoring, raking weights) |
+| `code/functions.R` | Shared utility functions  |
 | `code/prep-survey-data.R` | Prepare SurveyMonkey survey data |
 | `code/prep-poststrat-tables.R` | Build poststratification tables from ACS data |
 
-### Michigan Validation (Section 4 + Appendices C, D, E, G, H, J)
+### Michigan Validation (Section 4 + Appendices B, E, F, G, H, J, K)
 
 | File | Description |
 |---|---|
 | `code/michigan-validation/01-prep-data-michigan.R` | Assemble Michigan data (survey + poststrat + election results) |
 | `code/michigan-validation/02-run-michigan.R` | Core Michigan analysis: fit multivariate model, calibrate, generate main text figures and tables |
 | `code/michigan-validation/03-michigan-precinct.R` | Precinct-level calibration validation (Appendix H) |
-| `code/michigan-validation/04-michigan-diagnostics.R` | Model diagnostics: traceplots and R-hat (Appendix C) |
+| `code/michigan-validation/04-michigan-diagnostics.R` | Model diagnostics: traceplots and R-hat (Appendix B) |
 | `code/michigan-validation/05-prior-sensitivity.R` | Prior sensitivity analysis (Appendix G) |
-| `code/michigan-validation/06-plugin-vs-bayes.R` | Plugin vs. full Bayesian calibration comparison (Appendix J) |
+| `code/michigan-validation/06-plugin-vs-bayes.R` | Plugin vs. full Bayesian calibration comparison (validates footnote in Appendix I) |
 
 ### CES Simulations (Appendix I)
 
@@ -114,51 +112,48 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 | `code/ces-simulations/02-ces-simulations.R` | Run CES simulation study (configurable N_SIMS) |
 | `code/ces-simulations/03-summarize-ces-sims.R` | Summarize and plot simulation results |
 
-### Data Provenance Scripts (not run by `run.sh`)
+### Data Provenance Scripts
 
 | File | Description |
 |---|---|
-| `data-raw/download-ces-data.R` | Download CES files from Harvard Dataverse |
-| `data-raw/TargetsACS.R` | ACS poststratification table construction (documentation) |
-| `data-raw/TargetsElections.R` | Election results processing (documentation) |
+| `data-raw/download-ces-data.R` | Download CES files from Harvard Dataverse (run by `run.sh`) |
+| `data-raw/TargetsACS.R` | ACS poststratification table construction (documentation only, not run by `run.sh`) |
+| `data-raw/TargetsElections.R` | Election results processing (documentation only, not run by `run.sh`) |
 | `data-raw/README.md` | Data source documentation |
 
 ## Output Mapping
 
-### Main Text
+### Main Text (Section 4)
 
 | Paper Reference | Output File | Generating Script |
 |---|---|---|
+| Table 1 | `output/tables/michigan-model-correlations.tex` | `02-run-michigan.R` |
 | Figure 1 | `output/figures/mi-elections.pdf` | `02-run-michigan.R` |
-| Figure 2 | `output/figures/mi-elections-error-reduction.pdf` | `02-run-michigan.R` |
-| Figure 3 | `output/figures/mi-election-error-density.pdf` | `02-run-michigan.R` |
-| Figure 4 | `output/figures/mi-calib-adjustment-by-gov-results.pdf` | `02-run-michigan.R` |
-| Figure 5 | `output/figures/mi-calib-adjustment-by-gov-error.pdf` | `02-run-michigan.R` |
-| Figure 6 | `output/figures/mi-democratic-pid.pdf` | `02-run-michigan.R` |
-| Table 1 | `output/tables/michigan-calibration-error-reduction.tex` | `02-run-michigan.R` |
-| Table 2 | `output/tables/michigan-model-correlations.tex` | `02-run-michigan.R` |
+| Table 2 | `output/tables/michigan-calibration-error-reduction.tex` | `02-run-michigan.R` |
+| Figure 2 | `output/figures/mi-calib-adjustment-by-gov-error.pdf` | `02-run-michigan.R` |
 
 ### Appendices
 
 | Paper Reference | Output File | Generating Script |
 |---|---|---|
-| Figure C.1 | `output/figures/model-diagnostics/mi-rhat-hist.pdf` | `04-michigan-diagnostics.R` |
-| Figure C.2 | `output/figures/model-diagnostics/mi-trace-lp.pdf` | `04-michigan-diagnostics.R` |
-| Figure C.3 | `output/figures/model-diagnostics/mi-trace-cty-intercept.pdf` | `04-michigan-diagnostics.R` |
-| Tables D.1-D.4 | `output/tables/michigan-empirical-*.tex`, `michigan-modeled-*.tex` | `02-run-michigan.R` |
-| Figure E.1 | `output/figures/mrsp-comparison.pdf` | `02-run-michigan.R` |
-| Figure E.2 | `output/figures/error-density-mrsp-comparison.pdf` | `02-run-michigan.R` |
-| Table E.1 | `output/tables/mrsp-error-reduction.tex` | `02-run-michigan.R` |
-| Figures G.1-G.2 | `output/figures/michigan-prior-sensitivity-*.pdf` | `05-prior-sensitivity.R` |
-| Figure H.1 | `output/figures/mi-precinct-elections.pdf` | `03-michigan-precinct.R` |
-| Figure H.2 | `output/figures/mi-precinct-election-error-density.pdf` | `03-michigan-precinct.R` |
-| Table H.1 | `output/tables/michigan-precinct-calibration-error-reduction.tex` | `03-michigan-precinct.R` |
-| Figure I.1 | `output/figures/ces-simulation-results.pdf` | `03-summarize-ces-sims.R` |
-| Table I.1 | `output/tables/ces-simulation-rmse-reduction.tex` | `03-summarize-ces-sims.R` |
-| Table I.2 | `output/tables/ces-population-correlations.tex` | `02-ces-simulations.R` |
-| Table I.3 | `output/tables/ces-sim-full-regression.tex` | `02-ces-simulations.R` |
-| Table I.4 | `output/tables/ces-population-re-correlations.tex` | `02-ces-simulations.R` (only with `--refit`) |
-| Appendix J | Console output (no saved files) | `06-plugin-vs-bayes.R` |
+| Figure B1 | `output/figures/model-diagnostics/mi-rhat-hist.pdf` | `04-michigan-diagnostics.R` |
+| Figure B2 | `output/figures/model-diagnostics/mi-trace-lp.pdf` | `04-michigan-diagnostics.R` |
+| Figure B3 | `output/figures/model-diagnostics/mi-trace-cty-intercept.pdf` | `04-michigan-diagnostics.R` |
+| Table E1 | `output/tables/mrsp-error-reduction.tex` | `02-run-michigan.R` |
+| Figure E4 | `output/figures/mrsp-comparison.pdf` | `02-run-michigan.R` |
+| Table F2 (a–d) | `output/tables/michigan-modeled-covariances.tex`, `michigan-modeled-correlation.tex`, `michigan-empirical-covariances.tex`, `michigan-empirical-correlation.tex` | `02-run-michigan.R` |
+| Figure G5 | `output/figures/michigan-prior-sensitivity-correlation.pdf` | `05-prior-sensitivity.R` |
+| Figure G6 | `output/figures/michigan-prior-sensitivity-rmse.pdf` | `05-prior-sensitivity.R` |
+| Figure H7 | `output/figures/mi-precinct-elections.pdf` | `03-michigan-precinct.R` |
+| Table H3 | `output/tables/michigan-precinct-calibration-error-reduction.tex` | `03-michigan-precinct.R` |
+| Table I4 | `output/tables/ces-sim-full-regression.tex` | `02-ces-simulations.R` |
+| Figure I8 | `output/figures/ces-simulation-results.pdf` | `03-summarize-ces-sims.R` |
+| Table I5 | `output/tables/ces-simulation-rmse-reduction.tex` | `03-summarize-ces-sims.R` |
+| Figure J9 | `output/figures/mi-democratic-pid.pdf` | `02-run-michigan.R` |
+| Figure K10 | `output/figures/mi-calib-adjustment-by-gov-results.pdf` | `02-run-michigan.R` |
+| Figure K11 | `output/figures/mi-elections-error-reduction.pdf` | `02-run-michigan.R` |
+| Figure K12 | `output/figures/mi-election-error-density.pdf` | `02-run-michigan.R` |
+| Figure K13 | `output/figures/mi-precinct-election-error-density.pdf` | `03-michigan-precinct.R` |
 
 ### Inline Statistics
 
