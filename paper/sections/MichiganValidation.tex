@@ -1,0 +1,125 @@
+The primary use case for this method is measuring public opinion on policy issues. Evaluating the method requires: (1) a policy issue with available ground-truth data; and (2) a survey measuring that issue alongside variables suitable for calibration. 
+
+We evaluate the method using pre-election polling of the 2022 Michigan midterm election.
+This election featured a referendum concerning abortion rights (Proposition 3) alongside races for Governor and Secretary of State. 
+We calibrate to ground-truth Governor and Secretary of State results and evaluate how this changes estimates of Proposition 3 opinion.
+
+
+
+We use data from an original survey conducted via SurveyMonkey in fall 2022.\footnote{Because no sensitive information was collected, the IRB \if0\blind at the University of Pennsylvania~\fi deemed the survey exempt from review\if0\blind~(Protocol \#852133)\fi.} 
+Respondents were recruited via a river sample: users who completed any SurveyMonkey survey during this period were invited to take a survey on the 2022 midterm elections.
+We have $N =\inputy{\numpath/michigan-sample-size.txt}$ Michigan respondents who answered all demographic and outcome questions.
+Appendix \ref{apx:modeling} contains details of this case and survey. 
+
+
+\subsection{Validation Approach}
+
+We model vote choice for the three statewide elections (alongside other opinions) as a function of respondent- and county-level predictors.
+We first generate uncalibrated county-level estimates by poststratifying on the joint distribution of county demographics.  
+We then calibrate to observed county-level margins for the Governor and Secretary of State races and assess how this changes estimation error.
+
+Individual-level predictors include age, race, gender, education, with interactions between race $\times$ education and nonwhite $\times$ education $\times$ age.
+County-level predictors are percent nonwhite, percent Hispanic/Latino, percent college-educated, median income, and 2020 Biden two-party vote share. 
+The specification includes county-level random intercepts correlated across outcomes, which provide the basis for our adjustment.
+Further modeling details, including \texttt{R} code, are included in Appendix \ref{apx:modeling}.\footnote{Additionally, Appendix \ref{apx:priors} examines the sensitivity of our results to the choice of prior distributions.}
+
+We produce two sets of adjusted results: the first calibrates Secretary of State and Proposition 3 using gubernatorial results; the second calibrates Proposition 3 using both gubernatorial and Secretary of State results.
+
+Because we calibrate to two-party vote share, the calibration implicitly targets the \textit{electorate} rather than the \textit{population}. 
+The approach can target the population instead by including turnout as a calibration variable --- i.e., calibrating to Democratic vote share, Republican vote share, and aggregate turnout as functions of total population. 
+We take this approach in a simulation study in Appendix \ref{apx:simulations}.
+Researchers should take care in specifying the population of interest --- which depends on the substantive research question --- and ensuring that the calibration variables are measured accordingly.
+
+
+
+\subsection{Validation Results}
+
+Calibration substantially reduces error: average absolute error for Secretary of State and Proposition 3 falls by \inputy{\numpath/sos-mae-reduction.tex} and \inputy{\numpath/prop3-mae-reduction.tex}, respectively. % calculated from tab:mi-cty-error
+
+
+Table~\ref{tab:mi-cors} reports correlations between county-level random intercepts across outcomes. This matrix measures residual within-county correlation on the logit scale after accounting for covariates.
+
+\begin{table}[tb]
+	\centering
+	\caption{Correlation of County Intercepts Across Outcomes, Michigan 2022}
+	\label{tab:mi-cors}
+	\resizebox{\textwidth}{!}{\input{\tabpath/michigan-model-correlations.tex}}
+	\capnotes{Posterior mean correlations between county random intercepts across survey outcomes.}
+\end{table}
+
+Consistent with partisan and geographic sorting, county intercept correlations are relatively high across outcomes.
+The sole exception is independent party identification, which is largely unrelated to other county-level opinions.
+
+Despite these high average correlations, Table \ref{tab:mi-cors} reveals interesting variation. 
+For example, the residual geographic correlation between governor vote choice and belief that Biden won legitimately is just below $0.7$, but the correlation between governor vote choice and Republican party identification is about $-0.5$. 
+Calibrating to gubernatorial results will thus produce a smaller update for party identification than for beliefs about Biden's legitimacy.
+In short, gubernatorial vote choice carries more information about opinions on Biden's legitimacy than about party identification.
+This is consistent with the specifics of the race: Republican gubernatorial candidate Tudor Dixon denied Biden's 2020 victory, alienating some Republicans \citep{U:2022}. 
+
+Using these correlations, we calibrate to outcomes with known county-level values. 
+Figure~\ref{fig:mi-cty-elec-rs} plots true county-level vote share against: (1) uncalibrated MRP estimates; (2) estimates calibrated to gubernatorial results; and (3) estimates calibrated to both gubernatorial and Secretary of State results.
+
+\begin{figure}[tb]
+	\centering
+	\caption{County-Level MRP Results, Michigan 2022 Elections}
+	\label{fig:mi-cty-elec-rs}
+	\includegraphics[scale=.7]{mi-elections.pdf}
+	\capnotes{The $x$-axis shows the true county-level Democratic/pro-choice vote share and the $y$-axis shows model-based estimates. The top row shows uncalibrated MRP estimates, the middle row shows estimates calibrated to the Governor race, and the bottom row shows estimates calibrated to Governor and Secretary of State races.}
+\end{figure}
+
+The top row shows that uncalibrated MRP underestimates Democratic vote share in the gubernatorial and Secretary of State races, as well as the pro-choice position in Proposition 3. 
+Moreover, there is evidence of heteroskedasticity, with more variation in polling errors in less-Democratic counties.
+Some errors in less-Democratic counties exceed 10 percentage points.
+
+The second row shows the effect of calibrating to gubernatorial results, showing a dramatic improvement in accuracy.
+By construction, calibrated gubernatorial vote shares perfectly match actual outcomes (far left). 
+The center and right panels show that Secretary of State and Proposition 3 predictions also improve substantially. 
+Calibrated estimates are closer to the 45-degree line and heteroskedasticity is greatly reduced. 
+
+The final row shows calibration using both Governor and Secretary of State results.
+As the panel in the lower-right reveals, the doubly-calibrated estimate is slightly improved  relative to the estimates calibrated using only the gubernatorial results. 
+The mild gains likely reflect the similar relationships both elections have with Proposition 3 support. 
+The correlation of county intercepts between the Governor and Secretary of State races was nearly 0.7, indicating that the latter race adds relatively little additional information. 
+
+\begin{table}[tb]
+	\centering
+	\caption{County-Level Errors,  Michigan 2022 Elections}
+	\label{tab:mi-cty-error}
+	\input{\tabpath/michigan-calibration-error-reduction.tex}
+	\capnotes{Entries in the table show the county-level error associated with uncalibrated and calibrated MRP vote share estimates for the Democrat/pro-choice outcome. The first row for each race is the error when using uncalibrated MRP; the second row is the error when calibrating to the governor outcomes; the third row is the error when calibrating to both the Governor and Secretary of State outcomes.}
+\end{table}
+
+Table~\ref{tab:mi-cty-error} summarizes these results by calculating the mean signed error, the mean absolute error (MAE), the root mean squared error (RMSE), and the range of errors across counties. 
+Each panel has three rows: uncalibrated MRP, calibrated to Governor, and calibrated to both Governor and Secretary of State. 
+
+Calibrating to the Governor race reduces mean signed error in the Secretary of State race from {\inputy{\numpath/sos-msgnederror-uncalib.tex}} percentage points in the Republican direction to just {\inputy{\numpath/sos-msgnederror-calib-gov.tex}}  points --- a reduction of {\inputy{\numpath/sos-msnederror-reduction.tex}}.
+MAE and RMSE both fall by nearly two-thirds and the error range shrinks dramatically, from {\inputy{\numpath/sos-error-range-uncalib.tex}} to {\inputy{\numpath/sos-error-range-calib-gov.tex}}.
+
+Proposition 3 results show modest additional gains from calibrating to multiple outcomes. 
+The MAE is reduced from {\inputy{\numpath/prop3-mae-uncalib.tex}} to {\inputy{\numpath/prop3-mae-calib-gov.tex}} percentage points when calibrating to the Governor results --- a reduction of {\inputy{\numpath/prop3-mae-reduction.tex}}.  
+Jointly calibrating to both races further reduces the MAE to {\inputy{\numpath/prop3-mae-calib-gov-sos.tex}} percentage points. 
+Maximum and minimum errors are also greatly reduced by calibrating to both races.
+
+\begin{figure}[tb]
+	\centering
+	\caption{Change in County-Level Estimates from Calibration to Governor Results}
+ 	\label{fig:mi-change-error}
+ 	\includegraphics[scale=.75]{mi-calib-adjustment-by-gov-error.pdf}
+ 	\capnotes{The $y$-axis plots the difference between calibrated and uncalibrated county-level estimates for Secretary of State and the abortion proposition. The $x$-axis shows the county-level error in the Governor's race before calibration where positive values indicate overestimating the support for Democratic incumbent Gretchen Whitmer.}
+\end{figure}
+
+
+To visualize the nature of the calibration, Figure \ref{fig:mi-change-error} plots the effect of calibration in the Secretary of State and abortion proposition against the baseline error in estimates for Governor.\footnote{Figure \ref{fig:mi-change-result} in the Appendix plots the calibration effect against the raw county-level Governor results.}
+The $x$-axis shows the gubernatorial overestimate; the $y$-axis shows the change in estimates after calibration.
+
+The pattern is intuitive: where standard MRP overestimates gubernatorial Democratic vote share, other estimates are revised downward.
+Most points fall below 0 on the $x$-axis --- indicating that baseline MRP underestimates Democratic vote share.
+Consequently, most observations fall above 0 on the $y$-axis.
+
+The slope reflects the cross-race correlations. One-for-one adjustment would place points on the 45-degree line. The observed slope is flatter, reflecting imperfect correlations across races.
+The fact that the left-hand panel has a flatter slope than the right-hand panel reflects the lower correlation  between the Governor and Secretary of State races than between the Governor race and the abortion proposition.
+
+In sum, we find that our calibrated MRP approach can significantly improve estimates of small-area opinion.
+We compare our approach to alternatives in Appendix \ref{apx:mrsp}, finding that our method outperforms alternatives in this setting. 
+In Appendix \ref{apx:pid}, we also show the effect of calibration on party identification --- an outcome with no ground-truth data in Michigan.
+ 

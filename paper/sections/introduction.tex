@@ -1,0 +1,33 @@
+
+
+
+Surveys are fundamental to the measurement of public opinion and behavior, but the deteriorating performance of both pre-election polls \citep{Cetal:2021,Keta:2016} and academic surveys \citep{Jacobson2022} has fueled concerns that survey respondents differ from the populations they are meant to reflect \citep{PNAS2023,Bailey2023}.
+Researchers have proposed several methods to address these concerns. 
+A particularly important approach is multilevel regression and poststratification (MRP) \citep{GL:1997,PGB:2004}, which combines regression modeling with poststratification to estimate opinion in populations that were not intentionally sampled.
+
+Despite these improvements, MRP estimates may still suffer from at least three sources of error: (1) nonignorable nonresponse, where respondents differ from nonrespondents in ways not captured by covariates \citep[e.g.,][]{CLT:2022}; (2) poststratification error, where population targets are proxied or measured with error; and (3) model specification error and sampling variation.
+
+These errors matter: a rich literature uses constituency-level opinion estimates to assess democratic representation, but interpreting discrepancies between public opinion and policy as ``democratic deficits'' \citep{LP:2012} requires confidence that these gaps are not artifacts of survey error --- confidence that is increasingly difficult to justify \citep{C:2022}.\footnote{Work on this question extends back at least to \citet{MS:1963} and \citet{A:1978}.  More recently, see: \citet{Gelman2009,LP:2012,LPJ:2008,C:2006,TW:2013,T:2015,CW:2022,SP:2023,BS:2018,HFMS:2019}.
+Other closely related work involves studying subgroup opinion and behavior within electoral districts \citep{GG:2013,Kuriwaki2023,LS:2019,WR:2012}.}
+
+A large literature has proposed MRP-related strategies to improve small-area opinion measurement \citep{GG:2013,HanrettyLauderdaleVivyan2016,LW:2017,B:2019,CW:2019,Ornstein2020,BruchFelderer2022, BLW:2022,G:2023,BMFH:2023, RMO:2023}.
+We contribute a method that reduces both the bias and variance of MRP estimates by leveraging auxiliary data with known marginals (e.g., election results) to calibrate estimates of correlated outcomes lacking ground truth (e.g., policy attitudes).
+
+The core insight is that because attitudes are correlated across issues, so too are errors in survey-based estimates: if an MRP model overestimates Democratic vote share in a county, it probably also overestimates support for increasing the minimum wage.
+Our approach jointly models outcomes of interest alongside auxiliary variables with known ground truth, estimating the geographic-level correlations across variables.
+We then use these estimated correlations to update estimates of target variables based on the observed calibration error for the auxiliary variables with ground-truth data.
+This approach, which is agnostic as to the source of error, provides larger adjustments for more highly correlated variables.
+Our method also enables opinion estimation in smaller geographies than those in the survey or poststratification data by applying calibration at a lower, nested level (e.g., precincts within counties).
+We implement our methods in \texttt{R} software available at \url{http://github.com/wpmarble/calibratedMRP}.\footnote{Appendix \ref{apx:software} demonstrates key functionality.}
+
+We validate our approach using pre-election polling in the 2022 Michigan midterm election.
+We focus on elections for governor, secretary of state, and a ballot proposition on reproductive rights (Proposition 3).
+Calibrating to the governor race reduces county-level error by about two-thirds in the other elections.
+Our precinct-level extension reduces error by 60\%.
+Simulations show that the procedure is most helpful when the calibration variable is highly correlated with the outcome of interest, and that it substantially reduces error even with small, highly non-representative samples.
+
+Methodologically, we build on methods for calibrating model-based inferences to known population quantities.
+MRP researchers commonly use a ``logit shift'' to adjust discrepancies between known aggregates and model-based estimates \citep{GG:2013,RMO:2023}.\footnote{For example, \citet{Kuriwaki2023} are interested in the distribution of vote choice by racial group within each congressional district. While ground truth data on racial voting is not available, they apply the logit shift to district aggregates to ensure their estimates are consistent with known election results.}
+We extend this approach by jointly modeling correlated outcomes and exploiting their covariance structure to improve estimates for outcomes with unobserved true values.
+Our work is also related to efforts to expand poststratification using synthetic targets \citep{LW:2017}; our approach sidesteps synthetic poststratification tables entirely, requiring only marginal distributions of auxiliary variables at the geographic level of interest.
+

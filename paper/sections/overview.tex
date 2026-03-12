@@ -1,0 +1,50 @@
+MRP involves three steps. First, researchers use survey data to estimate a regression model predicting an outcome of interest (e.g., opinion, behavior). 
+The regression includes individual- and geographic-level predictors whose joint distribution is known (e.g., from Census microdata). 
+Second, the model predicts the expected outcome for each combination of covariates in the known joint distribution (i.e., each poststratification cell). Third, final estimates are weighted averages of predicted outcomes in each cell.
+The weights are proportional to population size of the cell.\footnote{We will often refer to the subgroup of interest as a ``geography,'' following  work employing MRP to estimate opinion in sub-national political units. It is important to note, however, that MRP can be applied just as easily to other subgroups, such as those defined by race or age, so long as their joint distribution with other variables in the regression is known. }
+
+\subsection{Population Quantities}
+
+Suppose we are interested in public opinion on $J$ binary outcomes. Our estimands $\theta^j$ denote the population share holding attitude $j$. Superscripts index issues; subscripts index groups or individuals.
+For example, $\theta^j$ might represent the share of the public who turn out to vote, who vote for the Democrat, or who support a policy.
+
+The population is partitioned into a set of cells $\mathcal{C}$, where each cell $c$ is defined by a combination of demographic variables and geography. 
+For example, $\mathcal{C}$ might represent every combination of age, race, gender, education, and county. 
+Population cell sizes $N_c$ are known from Census data or other sources.\footnote{When researchers do not have information on the full joint distribution, there are several methods available to estimate the joint distribution. Key ideas in the literature include combining marginal distributions by assuming independence, using survey data to estimate the joint distribution, or combining these two approaches \citep{LW:2017,CW:2019}.\label{fn:synthps}}  
+The total population is the sum of cell populations: $N \equiv \sum_c N_c$. 
+The poststratification table is defined by cell-level covariates and cell sizes $N_c$.
+Because cells are defined by geography, let $\mathcal{C}_g$ denote the cells within geography $g$ (e.g., $\mathcal{C}_{\text{Calif.}}$ for California).
+
+Population opinion is a weighted average of cell-level opinion:
+\begin{align}
+\begin{split}
+	\text{population-level opinion:} \quad &\theta^j \equiv \frac{\sum  N_c \theta_c^j}{\sum N_c} \\
+	\text{opinion in geography $g$:} \quad &\theta_g^j \equiv \frac{\sum_{c \in \mathcal{C}_g}  N_c \theta_c^j}{\sum_{c \in \mathcal{C}_g} N_c} 
+	\label{eq:popopinion}
+\end{split}
+\end{align}
+
+\subsection{MRP Estimation}
+
+MRP estimation proceeds by using survey data to fit a regression model for $\theta^j_c$ as a function of covariates in the poststratification table.
+The model typically includes geographic intercepts to capture remaining between-geography variation after accounting for individual-level covariates.
+The model is used to generate predictions $\hat{\theta}^j_c$ for each cell.
+After generating opinion estimates for each cell, researchers then poststratify those estimates to the geography of interest ---  i.e., substituting estimates for the population quantities in Equation~\ref{eq:popopinion}.
+
+MRP allows researchers to estimate opinion in geographies that were not intentionally sampled. 
+For example, researchers studying representation may want to know whether policy outcomes accord with public opinion \citep[e.g.,][]{LP:2012,Tausanovitch2014}, but even large surveys are unlikely to have many respondents in any given geography.
+MRP provides a solution by pooling information across geography and demographics via the regression step and accounting for differences in population composition via the poststratification step. 
+
+\subsection{Remaining Sources of Error}
+
+The performance of the MRP estimates relies on ignorability: conditional on covariates, representation in the survey is independent of the outcome.
+Under ignorability and correct model specification, MRP is consistent.
+To make these assumptions more plausible, recent work has focused on specifying more complex interactions \citep[e.g.,][]{GG:2013,B:2019,BLW:2022,G:2023} and increasing the number of poststratification variables \citep{LW:2017}.
+Still, respondents may differ from non-respondents in unobservable ways. Additionally, attempts to reduce bias by increasing model complexity may be offset by increased variance \citep{BH:2013,WR:2012}.
+
+A second source of error arises when the population of interest differs from the population used to construct the poststratification table.
+An example is estimating the opinions of the electorate using the voting-age population demographics.  
+
+Finally, even under ideal conditions, MRP does not guarantee accurate estimates for every geography: model-based estimates that are unbiased overall can still produce sizable errors in specific areas.
+
+

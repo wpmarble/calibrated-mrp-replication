@@ -1,0 +1,836 @@
+
+
+
+
+\section{Bayesian Estimation Procedure}
+\label{apx:bayesest}
+We adopt a fully Bayesian framework for estimation in our applications.
+By generating estimates for each draw from the posterior, we are then able to directly account for the uncertainty that arises in the estimation of $\mbf{\Sigma}$.
+
+Assuming we have $M$ draws from the posterior distribution of the parameters, we apply the method to each draw $(m)$ separately. 
+Specifically, for each draw $(m)$ we calculate the following quantities: 
+\begin{itemize}
+	\item $\hat{\theta}_c^{j(m)}$ and $\hat{\theta}_g^{j(m)}$: cell-level and geographic-level estimates of opinion on each issue $j$ for all cells $c$ and geographies $g$
+	\item $\delta_g^{\mbf{o}(m)}$: the logit shift parameters for the observed outcomes, which ensure model-based predictions match ground-truth data for these outcomes
+	\item $\delta_g^{\mbf{u}(m)}$: the estimated logit shift parameters for the unobserved outcomes, calculated following Equation \ref{eq:estimator} using the covariance parameters from this posterior draw $\mbf{\Sigma}^{(m)}$
+	\item $\tilde{\theta}_c^{j(m)}$: updated cell-level probabilities generated from adding the estimated logit shift parameters, following Equation \ref{eq:updatedprobs}
+	\item Finally, we generate updated subgroup estimates by poststratifying $\tilde{\theta}_c^{j(m)}$ to the population of interest
+\end{itemize}
+By doing these steps once for each draw from the posterior, we generate a calibrated posterior distribution for the quantities of interest.
+We then summarize this posterior distribution, e.g. by taking the mean of the quantity of interest across posterior draws. 
+
+\clearpage
+\section{Details of Michigan Validation Exercise}
+\label{apx:modeling}
+
+
+This section provides additional details on modeling and context for the Michigan validation.  We use data collected via SurveyMonkey's river sample in Fall 2022. We subset data to responses collected after October 18, 2022 (three weeks before election day). 
+
+\subsection{Context}
+
+The 2022 Michigan election featured three statewide election contests that we analyze: the gubernatorial election between incumbent Gretchen Whitmer, a Democrat, and TV newscaster Tudor Dixon, a Republican; the Secretary of State election between incumbent Democrat Jocelyn Benson and Republican Kristina Karamo (who was subsequently elected as Michigan GOP Chair); and a proposed constitutional amendment to protect reproductive rights and the legal access to abortion (Proposition 3).
+Both Republican candidates, Dixon and Karamo, denied the validity of the 2020 presidential election and promoted unfounded conspiracy theories about fraud in the election.\footnote{\url{https://www.axios.com/local/detroit/2022/09/26/gop-election-deniers-on-michigans-ballot}}
+Ahead of the election, the RealClearPolitics polling average had Whitmer ahead by 1.0 percentage point and the state was projected by RealClearPolitics as a ``GOP Pick-Up" based on the fact that past polling errors in Michigan favored Democrats by 2.2 percentage points on average.\footnote{\url{https://www.realclearpolitics.com/epolls/2022/governor/mi/michigan_governor_dixon_vs_whitmer-7545.html} } 
+In actuality, Whitmer won re-election by 10.6 percentage points and Democrats gained unified control of state government for the first time since 1983. 
+
+Michigan is a useful case to examine for several reasons. 
+First, pre-election polling averages were again mistaken in 2022 after making similarly large misses in both 2016 and 2020 \citep{Keta:2016,Cetal:2021}.
+Second, there were three statewide races in 2022, enabling us to examine county-level results across several outcome measures.
+Knowing the actual county-level vote margins for multiple races allows us to not only assess the accuracy of calibrated estimates compared to known outcomes, but also to quantify the gains in accuracy from calibrating to multiple election outcomes. 
+Third, abortion is one of the most important public policy issues, with a wave of state-level policy changes subjected to referendums in the years since the repeal of \textit{Roe v. Wade}.\footnote{\url{https://apnews.com/article/abortion-ballot-amendment-ban-protection-states-2024-052ff9846f8416efb725240af22b92ec}}
+
+Finally, there are no state-sourced measures of partisanship in Michigan and imputed partisanship measures used by commercial voter file companies are notoriously limited.\footnote{As \citet{CLT:2022} show, fewer than 50\% of respondents to the 2020 National Exit Poll self-identified with the party they were imputed as being most likely to belong to.}
+The poor quality of imputed partisanship in Michigan makes it problematic to use party as a poststratification target --- contributing to the relatively poor performance of pre-election polls in Michigan.\footnote{Using voter-file measures rather than Census-based measures to create the poststratification table also creates issues because of known issues in the imputation of other measures (e.g., non-state sourced measures for race and ethnicity) as well as the need to rely on the accuracy of the voter file for characterizing the electorate.}
+
+
+All that said, the raw SurveyMonkey data we collected only slightly underestimated Democratic performance: the two-party Democratic vote share for governor was \inputy{\numpath/raw-mi-gov-percent.tex}\% (compared to the real outcome of 55.3\%); for secretary of state was \inputy{\numpath/raw-mi-sos-percent.tex}\% (compared to the real outcome of 57.1\%); and the raw survey share voting ``yes'' on Proposition 3 was \inputy{\numpath/raw-mi-prop3-percent.tex}\% (compared to the real outcome of 56.7\%).
+
+\subsection{Measuring Sociodemographic Variables}
+\label{apx:surveymeasure}
+We use several variables to model opinion based on conventional weighting practices and theories about the nature of survey non-response.
+While it is certainly possible to extend the covariates being used --- or to employ recent methods to determine the optimal set of covariates using cross-validation or other methods --- we rely on typical covariates to demonstrate the contributions of our method relative to the most commonly used approach.
+
+To model individual-level variation in survey responses to question $j$ from individual $i$ we create a series of indicator variables from self-reported demographics that include: age (computed based on their reported birth year), race, gender, education level, and county. 
+We recoded the continuous age variable into discrete bins containing the ages of: 18-29, 30-39, 40-49, 50-64, 65-74, 75+. 
+To measure race we used indicators for: Black, White, Hispanic/Latino, Asian/Pacific Islander, and a residual Other. 
+While there are continuing conversations about the relationship between racial and ethnic categories, we follow the practices used by the National Exit Poll and we classify all people who indicate Hispanic/Latino ethnicity as Hispanic/Latino regardless of their race. 
+We use four indicators to measure education attainment based on: high school degree or less, some college or an associates degree, college graduate, and postgraduate degree.
+
+
+We map respondents to their county based on their zip code. 
+Although most zip codes are located within a single county, when zip codes span multiple counties we assign respondents to the county containing the highest fraction of zip code residents based on population tables \citep{Geocorr}. 
+So doing inevitably misclassifies some respondents, but the magnitude and impact of matching errors is trivial --- over 97\% of people can be uniquely classified into a single county and only 3\% of the respondents live in a zip code spanning more than one county.% note: this calculation is in  weighting/code/2022SMInjestCleaning.R
+
+
+\subsection{Generating the Poststratification Table}
+\label{apx:poststrat}
+To generate the poststratification table, we use microdata from the 2020 American Community Survey 5-year data files, obtained via IPUMS USA \citep{IPUMS}.
+For each county, we count the number of people in every possible demographic combination using: age $\times$ race $\times$ gender $\times$ education for a total of $240$ unique cells within each county. 
+We apply person-level weights from the ACS in calculating these totals.
+
+There is some error in measuring the number of county residents in each of the demographic cells because the smallest level of geography available in the Census microdata is a unit called a Public Use Microdata Area (PUMA) consisting of non-overlapping partitions with no fewer than 100,000 people. 
+To map between PUMAs and counties, we use the share of the population within each PUMA that lives in each county, according to  \citet{Geocorr}, to weight the Census microdata and generate the required population estimates. 
+This assumes that respondents' demographics are independent of the county they live in conditional on the PUMA they live in. 
+While this process introduces some error into the county-level estimates --- especially in counties with populations less than 100,000 --- the magnitude of this error is likely small relative to other sources of error.
+
+For comparisons to alternative calibration procedures, we generate two additional ``synthetic'' poststratification tables that incorporate votes for the Michigan governor race in 2022. We describe the details in Appendix \ref{apx:mrsp}.
+
+\subsection{Model Specification}
+
+As discussed in the main text, we jointly model the following survey outcomes: 
+(1) Biden job approval; (2) whether Joe Biden legitimately won the 2020 election; (3) whether elections are being conducted fairly; and (4) partisan identification. 
+All outcomes are binary variables --- including separate dummy variables for Democratic, Republican, and Independent identification. 
+We model the outcomes as a function of both respondent-level  and county-level predictors, and a set of random effects.
+
+Individual-level predictors include age, race, gender, education, and interactions between race $\times$ education and also nonwhite $\times$ education $\times$ age.
+We model age as a linear function of the category (treating the lowest category, 18-29, as 1, the second category, 30-39, as 2, and so on) as well as a random intercept for each age group. 
+This has the effect of allowing for age nonlinearities, while partially pooling the age effects toward a monotonic regression line  \citep{GG:2013}. 
+The interactions between demographic variables are modeled as random intercepts that are independent across outcomes.
+
+Geographic-level predictors help estimate between-county variation and county-level measures of: the share of the county that is nonwhite, the share that is Hispanic/Latino, the share with a college degree, county median income, and 2020 two-party vote share for Biden.\footnote{The demographic variables are calculated from the same ACS data used to generate the poststratification table.}
+
+Finally, we also include county-level random intercepts, which are allowed to be correlated across outcomes.
+These correlations form the basis of our adjustment method.
+These random intercepts account for residual between-county variation in the survey data not accounted for by individual-level or county-level predictors. 
+
+Because we estimate the model in a Bayesian framework, the model is completed by the assignment of priors for each of the estimated parameters. 
+All coefficients are assumed to have a very diffuse $\text{Normal}(0,5^2)$ prior.
+Following Equation \ref{eq:mvn} of the main text, county-level random effects are assumed to have multivariate normal priors centered at 0.\footnote{When viewed from the calibration perspective, this means we assume county-level random effects are 0 on average. Our calibration procedure relaxes this assumption in a post-estimation stage.}
+We decompose the covariance matrix for the county-level random effects into a correlation matrix and scale parameter for each outcome. 
+We assume that the random effect correlations have $\text{LKJ}(1)$ priors \citep{Lewandowski2009}, which is a uniform distribution over all correlation matrices. 
+The standard deviation for all random effects are given by half-$\text{Student-}t$ priors with 3 degrees of freedom, location parameter of 0, and scale parameter of 2.5. \footnote{See \citet{StanReference} for details about the parameterization of the Student-$t$ distribution.} 
+This distribution has its mode at 0 but has fat tails, allowing for large variances when the data supports it --- which corresponds to minimal pooling. 
+These properties make it an attractive default prior for variance parameters in hierarchical models \citep{Gelman2006}.
+We assess the sensitivity of our estimates to different choices of priors in Appendix \ref{apx:priors}.
+
+
+\subsection{Estimation Details and Diagnostics}
+
+We fit the model using the \texttt{R} package \texttt{brms} \citep{Buerkner2017}, which provides an interface to the Stan modeling language \citep{Carpenter2017}.
+We run 4 chains for 600 post-warmup iterations each, for a total of 2,400 draws from the posterior distribution. 
+Figure \ref{fig:rhats} plots a histogram of Gelman-Rubin $\hat{R}$ values. 
+All values are very close to 1, indicating good mixing across chains.
+A traceplot of the log probability is shown in Figure~\ref{fig:trace-lp} and traceplots for the standard deviation of county-level random effects are displayed in Figure~\ref{fig:trace-sds}.
+All chains appear to have mixed.
+Finally, the Hamiltonian Monte Carlo diagnostics \citep{Betancourt2016} provided no indications of poor convergence.
+
+\begin{figure}[tb]
+	\caption{Histogram of $\hat{R}$ Statistics}
+	\label{fig:rhats}
+	\centering
+	\includegraphics[scale=.75]{mi-rhat-hist.pdf}%
+
+	\caption{Traceplot of Log Probability}
+	\label{fig:trace-lp}
+	\centering
+	\includegraphics[scale=.75]{mi-trace-lp.pdf}
+\end{figure}
+
+\begin{figure}[p]
+	\caption{Traceplot of Standard Deviations of County Random Effects}
+	\label{fig:trace-sds}
+	\centering
+	\includegraphics[scale=.75]{mi-trace-cty-intercept.pdf}
+\end{figure}
+
+
+
+\clearpage
+\section{Software and Model Code}
+\label{apx:software}
+
+We provide an \texttt{R} package called \texttt{calibratedMRP} that implements the logit shift methods discussed in this paper. The package is designed to be user friendly, building on the \texttt{tidyverse} framework, and contains a number of convenience functions useful for researchers implementing multilevel regression and poststratification (with or without calibration). It builds on the \texttt{brms} package, which provides a high-level interface for fitting Bayesian multilevel regression models using Stan. The software can be downloaded at \url{http://github.com/wpmarble/calibratedMRP}.
+
+The first step is to fit a multivariate regression modeling with correlated random effects, as described in Equations (\ref{eq:basic})-(\ref{eq:mvn}). This model is easy to specify using the \texttt{mvbind()} operator in a \texttt{brms} formula.\footnote{See the \texttt{brms} vignette on multivariate response models for more details: \url{https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html}}
+
+After the model is fit, the primary top-level function implementing our proposed method is called \verb|calibrate_mrp()|. It takes an estimated multivariate model (fit using \texttt{brms}), along with a poststratification table and calibration targets. It returns a calibrated estimate for each outcome at the poststratification cell level. The function can return either an estimate for each draw from the posterior or a summary of the posterior across draws, behavior controlled by the \texttt{posterior\_summary} argument. 
+
+We illustrate use of the software by specifying the model we estimate for the Michigan validation exercise:
+\begin{small}
+\singlespacing
+\lstset{language=R}
+\begin{lstlisting}
+library(brms)
+library(calibratedMRP)
+
+## Define Formula ##
+form <- bf(
+  
+  # Multivariate outcomes
+  mvbind(gov, 
+         sos, 
+         michprop3,
+         biden_legitimate_irt,
+         biden_appr_irt,
+         election_fair_irt,
+         dem_pid, 
+         ind_pid, 
+         rep_pid) ~
+    
+    # Respondent-level predictors
+    gender + as.integer(agegrp) + race + educ + 
+
+    # Random intercepts for demographic categories
+    (1 | age | agegrp) + 
+    (1 | raceeduc | race_educ) + 
+    (1 | educagewhite | nonwhite_educ_agegrp) + 
+    
+    # County-level predictors
+    cty_pct_nonwhite_z +  cty_pct_hispanic_z +
+    cty_pct_college_z + cty_med_inc_z + cty_dem2020_z +
+    
+    # Random intercept for geography
+    (1 | c | countyfips) 
+)
+
+## Set normal(0,5) priors on coefs, defaults on other
+gp <- get_prior(formula = form, data = michigan, family = bernoulli())
+priors <- gp |>
+  mutate(prior = ifelse(class == "b", "normal(0,5)", prior)) 
+
+
+
+## Fit Model ##
+mod <- brm(formula = form, 
+           data = michigan,
+           family = bernoulli,
+           prior = priors,
+           ...                 # other arguments to `brms`
+           )
+
+## Generate Calibrated Cell-Level Estimates ##
+# because posterior_summary = FALSE, returns data frame
+# with calibrated estimates for each posterior draw
+calib_res <- calibrate_mrp(
+  model = mod,
+  ps_table = mi_ps,
+  weight = "est_n",          # size of poststratification cells
+  geography = "countyfips",  # geography at which to calibrate
+  targets = calib_target,    # data frame w ground-truth targets by geography
+  posterior_summary = FALSE  # return estimates for each posterior draw
+)
+\end{lstlisting}
+\end{small}
+
+These estimates can then be aggregated using the package's \texttt{poststratify()} function. For full Bayesian inference, \texttt{poststratify()} should be called once for each draw from the posterior. Because the package is written with \texttt{tidyverse} style in mind, this is simple to do using the functions \texttt{dplyr::group\_by()}, \texttt{dplyr::group\_split()}, and \texttt{purrr::map()}:
+
+\begin{small}
+\begin{lstlisting}
+## Poststratify to the county level, once for each posterior draw
+county_post <- calib_res |> 
+    group_by(.draw) |>
+    group_split() |>
+    map(~ {
+      poststratify(
+        .x, 
+        outcomes = all_of(c("gov", "sos", "michprop3")),
+        by = countyfips, 
+        weight = est_n
+      )
+    }) |>
+    bind_rows(.id = ".draw") 
+\end{lstlisting}
+\end{small}
+
+This process returns a data frame with a row for each county-posterior draw combination, representing the calibrated posterior distribution of the county-level averages. Finally,  researchers can summarize this posterior distribution by taking the mean, SD, quantiles, etc. across posterior draws.
+
+\begin{small}
+\begin{lstlisting}
+## Poststratify to the county level, once for each posterior draw
+county_res <- county_post |> 
+    group_by(countyfips) |>
+    summarise(gov_postmean = mean(gov_calib),
+              sos_postmean = mean(sos_calib),
+              michprop3_postmean = mean(michprop3_calib))
+\end{lstlisting}
+\end{small}
+
+The package also contains methods for plug-in estimation, which computes calibration using the posterior mean predictions, rather than performing the calibration separately for each posterior draw. This approach speeds up computation considerably and in our experience generates nearly identical results. 
+
+
+\clearpage
+
+\section{Comparison with Alternative Approaches}
+\label{apx:otherwting}
+
+Working in the MRP paradigm, we extend the ``logit shift'' approach to adjusting survey estimates in light of known population margins. 
+In this Appendix, we discuss connections to other methods. 
+
+
+\paragraph{Classic survey weighting.}
+In a classic survey weighting context, the known population margins can be used as weighting targets. 
+For example, researchers could generate weights via raking (a.k.a. iterative proportional fitting) that target election outcomes along with demographic variables.
+This method ensures that the weighted survey margins match the known population targets. 
+This method is used, for example, by the National Exit Poll to ensure the exit poll vote share margins match the outcomes. 
+Increasingly many polling firms are also including respondents' vote in the last election as a weighting target --- ensuring that the distribution of lagged vote choice matches the true outcome exactly. 
+
+The drawback of this approach is that, unlike poststratification, it can only account for a small number of interactions between weighting variables. 
+Adding more weighting targets requires more survey data to ensure that there are enough respondents in each weighting cell.
+This requirement may be problematic if researchers want to study outcomes in small geographies, as there typically will be few or no respondents in small levels of geography --- meaning there are no feasible survey weights to match ground-truth data measured at this level of aggregation.
+In the context of weighting to election results, this means that weights must be generated at a relatively high level of geography --- e.g., at the national level or state level. 
+In contrast, our approach allows us to calibrate estimates at a very fine level of geography --- e.g., county or precinct.
+
+
+\paragraph{Approximate multilevel calibration.}
+Recent research has proposed methods to generate weights that match first-order margins exactly --- as in traditional raking --- while approximately matching higher-order interactions \citep{BMFH:2023}. 
+These methods are a compromise between raking on marginal variables alone and full poststratification, thereby reducing bias in estimates relative to raking on margins alone. 
+Yet, even these more flexible methods require some representation of every level of a weighting variable, making it infeasible to weight to (say) county-level election results.
+
+\paragraph{Incorporating known margins in regression step.}
+A third approach is to include the known geographic aggregates as predictors in the MRP regression step. 
+For example, individual vote choice could be predicted as a function of individual-level covariates and election results in a respondent's state/county/precinct.
+Indeed, it is best practice to include such geographic-level predictors in MRP \citep{BH:2013}, as their inclusion will typically improve the model fit by sharing information across states.
+
+However, if there is nonignorable error in the survey, better model fit does not necessarily improve predictions of ground-truth data. 
+To illustrate, consider regressing individual-level vote choice (measured via a survey) on county-level election outcomes. 
+Suppose we obtain regression estimates of $\hat{y}_{i} = 0.2 + 1 \times \text{CountyResult}_i$, with $R^2 = 0.99$. 
+Even though there is nearly perfect model fit and a slope near 1, because the intercept is not 0, the predictions are not calibrated, in the sense that $E[\hat{y}_i \mid \text{CountyResult}_i] \ne \text{CountyResult}_i$. 
+By construction, the logit shift approach adjusts the intercept to ensure that the model-based predictions are correctly calibrated.
+
+
+
+\paragraph{Synthetic poststratification tables.}
+A final class of solutions involves imputing a poststratification table that includes the variables with known population margins. 
+In typical MRP applications, the poststratification table is derived from Census data, which limits the variables that can be used for poststratification. 
+For example, the Census does not include data on political preferences. 
+Thus, the regression step cannot include individual-level political preferences, even when they are likely to be highly predictive of the outcome of interest. 
+
+Methods to augment the poststratification table to include these political/attitudinal variables are referred to as multilevel regression and synthetic poststratification, or MRsP \citep{LW:2017}. 
+We consider two flavors of MRsP, which we call ``conventional MRsP'' and ``chained calibrated MRsP.''
+
+In conventional MRsP, as proposed by \citet{LW:2017}, the distribution of the attitudinal variable is assumed to be independent of cell-level demographics, within geography. For example, if in county $A$ Whitmer received 43\% of the  vote in the 2022 governor race, MRsP assumes that she received 43\% of the vote in every cell of the poststratification table falling into county $A$. 
+This approach allows researchers to include more predictive variables in the regression step, potentially improving performance. 
+However, the drawback is that the independence assumption is often violated --- especially so when the research would like to include multiple attitudinal predictors.\footnote{\citet{LW:2017} also consider an adjusted MRsP approach, in which the survey covariance is used to estimate the joint distribution. This approach is similar to the chained calibrated MRsP approach we implement below.}
+
+A potential improvement over conventional MRsP involves generating a calibrated poststratification table.
+We call this approach chained calibrated MRsP. 
+In this approach, we first fit a univariate model predicting governor vote share as a function of demographic and geographic covariates.
+We then calibrate these predictions at the county level using the logit shift approach. 
+This generates an estimate of the joint distribution of demographics and vote choice for governor. 
+We then fit a second regression model predicting the outcome of interest as a function of demographics and individual-level governor vote choice, then generate final estimate by weighting according to the calibrated synthetic poststratification table.
+This approach potentially improves over conventional MRsP by generating more realistic estimates of the joint distribution of attitudes and demographics.\footnote{This approach --- without the calibration step --- was used by \citet{Kastellec2015}, who call it two-stage MRP. See also \citet{LopezMartinEtAl2022} for a walk-through of this approach.}
+
+ 
+This approach involves fitting separate regression models for each additional outcome, which has several drawbacks.
+First, when working in a fully Bayesian framework, this approach can be cumbersome, as each model may be expensive to estimate.
+Second, the order of the modeling is likely to be consequential and difficult to choose systematically --- especially when there is more than a single outcome with ground-truth margins.
+In our Michigan exercise, we are able to update estimates to match ground-truth data on multiple election outcomes all in one step. 
+In the case of chained calibrated MRP, researchers would have to choose which order to proceed in --- e.g., should votes for governor be predicted with votes for secretary of state, or vice versa?
+Third, the multi-step approach makes it difficult to propagate uncertainty.
+In our approach, we can perform the calibration procedure separately for each draw from the posterior, which enables us to easily propagate uncertainty into downstream estimates.
+
+
+\paragraph{Multivariate MRP.}
+In a recent related contribution, \citet{Goplerud2025} propose a method to estimate the joint distribution of attitudes using MRP, which they refer to as ``multivariate MRP.''
+The key conceptual distinction between our approach and theirs is that they model the joint distribution of the outcomes, while we model the (conditional) marginal distribution of the outcomes.
+For example, they model the joint distribution of partisanship (which can take 3 values, \texttt{Dem}, \texttt{Rep}, and \texttt{Ind}) and support for abortion rights (which can take 2 values, \texttt{support} and \texttt{oppose}). 
+They then estimate the probability of each of the 6 possible combinations of party ID $\times$ abortion support in a multinomial model. 
+
+This approach focuses on extending the regression step of MRP, but it does not  ensure that model-based predictions match known geographic aggregates. 
+However, we suspect that the logit shift approach could be applied to this method. 
+We briefly sketch the idea here and leave further implementation to future research.
+
+In \citepos{Goplerud2025} multivariate MRP, researchers include a random intercept for each question in the joint response category. 
+Following their example, suppose we want to predict responses as a function of race and county of residence.
+Suppose also that the outcome variable \texttt{response} takes a value of 1 if the respondent selected the corresponding values of \texttt{partyID} and \texttt{abortion}. 
+In \texttt{lmer} syntax, they estimate models of the form:
+\begin{small}
+\begin{lstlisting}
+response ~ (1 | partyID) + (1 | abortion) + 
+   (1 | partyID : race) + (1 | abortion : race) + 
+   (1 | partyID : county) + (1 | abortion : county)
+\end{lstlisting}
+\end{small}
+Suppose the researcher wanted to ensure that the model-based predictions matched ground-truth margins of party ID --- for example, as derived from the vote file.
+One could apply the logit shift procedure, as defined in Equation \ref{eq:logitshift} of the main text, to adjust the value of the random intercept represented by the term \texttt{(1 | partyID : county)}.
+However, suitable modifications would need to be made in this case because  there are three levels of party ID and changes to the linear predictor of one value affect the probability of other values. 
+In order to calibrate all three outcomes, the logit shift optimization procedure would have to be performed over two parameters for each county --- e.g., by pinning the logit shift parameter for \texttt{partyID == "independent"} to 0 for each county and simultaneously computing the values of the county-level logit shift parameters for \texttt{partyID == "democrat"} and \texttt{partyID == "republican"}  that ensure the model-implied predictions match known population margins. 
+
+
+\clearpage
+\section{Empirical Comparisons with Alternative Approaches}
+\label{apx:mrsp}
+
+In this section, we compare the performance of our estimator to several alternative estimators. 
+To mimic our primary use case of estimating public opinion on policy issues, we restrict our attention to the Michigan abortion proposition. 
+
+
+In our primary validation exercise in the main text, we compare our proposed approach to conventional MRP in which the model does not have access to any contemporaneous election results. 
+We find large reductions in error when calibrating to contemporaneous election results. 
+However, it is possible that other methods for incorporating this information would provide similar gains. 
+To assess this possibility, we estimate county-level results on the Michigan abortion proposition using five methods:
+\begin{enumerate}
+		\item \textbf{Conventional MRP} The regression step predicts votes on the abortion proposition as a function of demographics and past contextual data (such as county racial composition and results in prior elections). These are the only variables used for poststratification.
+    \item \textbf{Conventional MRP w/ Contemporaneous Contextual Predictors} In the regression step, we also include county-level outcomes in the contemporaneous gubernatorial election as a contextual predictor (in addition to all of the predictors in the Conventional MRP model).
+		\item \textbf{Conventional MRsP} The regression step predicts votes on the abortion proposition as a function of demographics and individual-level vote for governor. We generate a synthetic poststratification table by assuming independence between vote for governor and demographics (conditional on county), following \citet{LW:2017}.
+		\item \textbf{Chained calibrated MRsP} The regression step predicts votes on the abortion proposition as a function of demographics and individual-level vote for governor. We generate a synthetic poststratification table by fitting a separate MRP model predicting governor vote as a function of demographics, then calibrate these predictions using the logit shift approach.
+		\item \textbf{Multivariate calibration} The method proposed in this paper, in which we fit a multivariate outcome model, then impute a logit shift parameter using the correlation in random geographic random effects across outcomes. 
+\end{enumerate}
+
+
+
+\begin{table}[tbh]
+		\centering
+		\caption{County-Level Errors, 2022 Abortion Proposition in Michigan}
+		\label{tab:compare_mrsp}
+		\input{\tabpath/mrsp-error-reduction.tex}
+\end{table}
+
+\begin{figure}[tbh]
+	\centering
+	\caption{County-Level Results for Four MRP Methods}
+	\label{fig:mrsp-comparison}
+	\includegraphics[width=\textwidth]{mrsp-comparison.pdf}
+\end{figure}
+
+The results are summarized in Table~\ref{tab:compare_mrsp} and scatterplots are shown in Figure~\ref{fig:mrsp-comparison}.\footnote{We do not compare our method to the multivariate MRP method of \citet{Goplerud2025} because that method focuses on estimating the \textit{joint} distribution of attitudes across issues. It is potentially possible, but not straightforward, to extend the logit shift calibration approach to this method.} 
+We find that our proposed multivariate calibration procedure outperforms all four alternatives. 
+Both conventional and calibrated MRsP actually generate \textit{worse} estimates than conventional MRP in our application, while our proposed method substantially reduces error.
+Similarly, using the county-level results of the contemporaneous governor election as a contextual covariate also leads to worse performance than conventional MRP.
+The top-left and top-middle plots in Figure \ref{fig:mrsp-comparison} show that conventional MRP and MRP with contemporaneous contextual covariates both tend to underestimate support for the abortion proposition. 
+Both flavors of MRsP pull county-level estimates to the extremes, underestimating support for the proposition in counties where it performed poorly and overestimating it in counties where it performed well. 
+The estimates from our proposed approach, in the bottom-right, lie closely along the 45-degree line.
+
+Overall, then, our approach compares favorably in this validation exercise to conceptually similar alternatives. 
+
+
+
+
+\clearpage
+\section{Discussion and Validation of the Covariance Equivalence Assumption}
+\label{apx:covariance-assumption}
+As we discuss in Section \ref{sec:assms}, we assume that the covariance of logit shift parameters is the same as the covariance of geographic random intercepts estimated from the survey data.  More formally, the geographic random intercepts in the regression model are given by
+\begin{align*}
+	(\alpha_g^1, \dots, \alpha_g^J) \sim \text{MultivariateNormal}(\mbf{0}, \mbf{\Sigma}).
+\end{align*}
+We assume that the unconditional distribution of the logit shift parameters necessary to ensure the estimates match the population targets follows this same distribution:
+\begin{align*}
+		(\delta_g^1, \dots, \delta_g^J) \sim \text{MultivariateNormal}(\mbf{0}, \mbf{\Sigma}).
+\end{align*}
+We observe some elements of the $\delta_g$ vector --- i.e., those corresponding to outcomes that have ground-truth data --- and use these observed elements to estimate the unobserved elements as follows:
+\begin{align*}
+E[\delta_g^\mbf{u} \mid \delta_g^\mbf{o}] &= \mbf{\Sigma}_{\mbf{uo}} \mbf{\Sigma}_{\mbf{oo}}^{-1} \delta_g^\mbf{o}
+\end{align*}
+
+What justifies the assumption that the $\delta_g$ parameters follow the same distribution as $\alpha_g$? Heuristically, the $\alpha_g$ parameters reflect the average shift that must be applied to the linear predictor for respondents in county $g$ to fit the survey data (after accounting for demographics and other observables). Similarly, $\delta_g$ reflects the average shift in the model-based linear predictor necessary to fit the ground-truth data.  Given the close correspondence between these quantities, it seems plausible that the correlation across outcomes might be similar --- i.e. that $\text{Var}(\delta_g^1, \dots, \delta_g^J) \approx \mbf{\Sigma}$. Both quantities $\alpha_g$ and $\delta_g$ are related to the  geographic-level variation in the outcome remaining, after conditioning on other parts of the model. 
+
+In this appendix, we first discuss the effect of violations of this assumption on the estimator. We then assess the plausibility of the assumption using data from the Michigan validation exercise. 
+
+
+
+
+\subsection{Violations of the Assumption}
+
+It could be the case that the intercept shifts necessary to match the underlying population data do not follow the same distribution as the geographic random intercepts in the regression model. We reason about the effect of such error on our proposed estimator under two classes of error: error in the scale of $\mbf{\Sigma}$ and error in the correlation structure. To cleanly delineate these two cases, it is convenient to consider a decomposition of the covariance matrix into its scale components and a correlation matrix: 
+\begin{align*}
+	\mbf{\Sigma} = D \Omega D,
+\end{align*}
+where $D = \text{diag}(\sigma_1, \dots, \sigma_J)$.
+In this decomposition, $\sigma_j$ represent standard deviations and $\Omega$ is the correlation matrix.
+
+\paragraph{Error in the Scale of $\mbf{\Sigma}$.} Suppose that there is less variation in the $\alpha_g$ parameters than in the true $\delta_g$ parameters necessary to make the model estimates match the true population data. In that case, the estimated standard deviations $\sigma_j$ will be too small relative to the standard deviations of the true intercept shifts $\delta_g$. 
+
+This type of error is innocuous if each $\sigma_j$ is mismeasured by the same multiplicative factor, as this factor will cancel out in calculating the adjustment. To see this fact cleanly, consider the two-outcome case, addressed on page \pageref{page:twooutcomes}, in which the estimated logit shift can be written $\hat{\delta}^2  = \hat{\rho} \frac{\hat{\sigma}_{2}}{\hat{\sigma}_1} \delta_g^1$. This expression makes clear that as long as the error in the scale is constant across outcomes, the estimator does not change. What matters is the ratio $\hat{\sigma}_2 / \hat{\sigma}_1$ (along with the estimated correlation $\hat{\rho}$). Multiplying both $\hat{\sigma}_1$ and $\hat{\sigma}_2$ by a constant would leave their ratio unchanged. 
+
+However, if there is differential error across outcomes in the scale of the intercept shifts necessary to match the population targets, then the estimator's performance will degrade. If $\frac{\hat{\sigma_2}}{\hat{\sigma_1}} > \frac{\sigma_2}{\sigma_1}$, then the estimated logit shift $\hat{\delta}^2_g$ will be too large. 
+
+This result generalizes beyond the case of two outcomes. Error in the survey-based estimate of the scale of $\Sigma$ is innocuous when it affects all outcomes equally (in a multiplicative sense). However, if the geographic variation in the survey is larger than the population-level variation for some outcomes but not others, the estimator's performance will suffer.
+
+
+\paragraph{Error in the Correlation Between Outcomes.} A second type of error occurs when the correlation structure differs between the survey data and the population data. In this case, the estimated logit shift will be either too large (if the correlation is overestimated) or too small (if it is underestimated) relative to the true geographic random intercept. This result can again be seen in the two-outcome case: if our estimate of $\rho$ is too large (but the ratio $\sigma_2 / \sigma_1$  is estimated correctly), then the estimate of $\delta_2$ will be too large. 
+
+That said, it is worth contrasting our approach with a standard approach that does not calibrate to any outcomes without ground-truth data --- e.g., by running MRP separately for each outcome and (potentially) calibrating only those outcomes with known population-level data. This no-adjustment case can be viewed as  assuming that there is no geographic correlation in the outcomes (conditional on covariates). Even when there is error in the estimate of the correlation, this error is likely to be smaller than the error generated by assuming $\rho = 0$ for most outcomes. In other words, it seems plausible that even when the correlation structure is estimated with error, it will be an improvement over the no-adjustment baseline.
+
+
+\subsection{Assessing Errors in Survey-Based Estimates of Covariance of Intercepts}
+
+If the researcher has access to more than one outcome with ground-truth data, it is possible to partially assess the quality of the survey-based estimate of $\mbf{\Sigma}$. Specifically, we can compare the survey-based estimate to the covariance of realized logit shift parameters $\delta_g$ for outcomes with ground-truth data.  
+
+To be precise, suppose we observe ground-truth data for outcomes $j = \{1, \dots, J_o\}$. For each geography $g$, we calculate the logit shift parameter that ensures the model-based estimates match known geographic aggregates, obtaining a matrix $\Delta^o = \{\delta_{gj}\}$ for ${g=1, \dots, N_g}$ and ${j = 1, \dots, J_o}$.  We then calculate the empirical covariance across outcomes $j$ and compare it to the survey-based estimate $\hat{\mbf{\Sigma}}$.
+
+We apply this procedure to the data from our Michigan validation exercise. We calculate the logit shifts in each county for the governor, secretary of state, and abortion proposition outcomes. We then compare the covariance of these realized logit shifts to the covariance of county random effects estimated in the regression model.\footnote{The logit shift is defined relative to an uncalibrated prediction, and we have a set of uncalibrated predictions corresponding to each draw from the posterior distribution of the model. We therefore calculate the logit shifts and associated covariance/correlations for each draw from the posterior distribution, then average them together to obtain a posterior mean.}
+
+
+
+
+
+
+ \begin{table}[tbh]
+ 		\centering
+ 		\caption{Comparison of $\hat{\mbf{\Sigma}}$ Based on Survey Estimates and Calibration}
+ 		\label{tab:validate-covariance}
+		\begin{subtable}[t]{.5\linewidth}
+ 			\centering
+ 			\caption{Survey-Based Covariance Estimate}
+ 			\resizebox{\textwidth}{!}{\input{\tabpath/michigan-modeled-covariances.tex}}
+ 		\end{subtable}%
+ 			\begin{subtable}[t]{.5\linewidth}
+ 			\centering
+ 			\caption{Survey-Based Correlation Estimate}
+ 			\resizebox{\textwidth}{!}{\input{\tabpath/michigan-modeled-correlation.tex}}
+ 		\end{subtable}\vspace{5mm}
+
+ 		\begin{subtable}[t]{.5\linewidth}
+ 			\centering
+ 			\caption{Covariance of Calibrated Intercept Shifts}
+ 			\resizebox{\textwidth}{!}{\input{\tabpath/michigan-empirical-covariances.tex}}
+ 		\end{subtable}%
+ 		\begin{subtable}[t]{.5\linewidth}
+ 			\centering
+ 			\caption{Correlation of Calibrated Intercept Shifts}
+ 			\resizebox{\textwidth}{!}{\input{\tabpath/michigan-empirical-correlation.tex}}
+ 		\end{subtable}
+ 		\capnotes{The top two subtables the survey-based estimate of the covariance (left) and correlation (right) across outcomes in the county-level random intercept. The bottom two subtables show the covariance and correlation of county-level intercept shifts calculated based on the logit shift calibration procedure.}
+ \end{table}
+
+Table \ref{tab:validate-covariance} presents the results. The top row presents survey-based estimates and the bottom row shows the results from calibration. The left-hand column presents covariance and the right-hand column correlations. 
+
+We start by comparing the covariance matrices on the left-hand side. Generally, the magnitudes of the two covariance matrices are roughly similar. For example, the survey-based variance of the county random intercepts for governor vote is around $0.13$, compared to the calibration-based estimate of around $0.19$. Overall, the scale of the calibrated estimates (in the bottom panel) is larger than the scale estimated from the survey data. However, recall that the important consideration is whether there is differential error in the scale across outcomes. To assess this consideration, consider the ratios of the estimates on the diagonals of the covariance matrices. In this application, the relative scale is very similar in both the survey-based and calibration-based estimates.
+
+Next, we assess the similarity in the correlations estimated from the survey data and from the realized logit shifts, in the right column of Table \ref{tab:validate-covariance}. We find that they are very similar. The survey estimate returns a correlation of around $0.67$ between the county-level intercept for governor and secretary of state, compared to a correlation of $0.73$ in the realized logit shifts. The correlations between the other pairs of outcomes are almost identical. 
+
+These results suggest that the correlation structure captured by the multilevel model fit using survey data is very similar to the correlation structure in the calibrated logit shifts. When this condition is satisfied, we should expect the calibration of outcomes without ground-truth data to be fairly accurate. In our application, this expectation is borne out in our validation results. 
+
+Of course, it is only possible to assess error in elements of $\Sigma$ corresponding to outcomes with ground-truth data. It could that there are larger errors in the elements of $\Sigma$ corresponding to outcomes without ground-truth data. Researchers should assess the likelihood of differential error across outcomes on a case-by-case basis. 
+
+
+
+
+\clearpage
+\section{Sensitivity to Choice of Priors}
+\label{apx:priors}
+We adopt a Bayesian approach to model fitting, which raises the question of how sensitive our results are to the choice of priors.
+Here we present results in which we re-run our Michigan validation procedure using different sets of priors. 
+The calibrated estimation procedure we propose here depends crucially on the model-based estimate of $\mbf{\Sigma}$, the covariance in random intercepts at the geographic level.
+Unsurprisingly, then, we find that the choice of prior over the correlation component of $\mbf{\Sigma}$ is consequential for the performance of the estimator. 
+However, we also find that the $\mathrm{LKJ}(1)$ prior, which is uniform over correlation matrices, is a good default choice and demonstrates near-optimal performance in our case. 
+
+We consider 12 configurations of priors in total. 
+We vary priors on fixed coefficients, denoted by $\beta$ and $\gamma$ in Equation \ref{eq:basic}, and on the correlations of geographic random effects across outcomes, denoted $\Omega$ (with $\mbf{\Sigma} = D \Omega D$).\footnote{Across all evaluations, we hold fixed the prior on the scale of the covariance matrices $D = \mathrm{diag}(\sigma_1, \dots, \sigma_J)$, with $\sigma_j \sim \text{Half-Student-}t(3, 0, 2.5)$.}
+
+
+For the coefficient priors, we assess the effect of the prior variance:
+\begin{itemize}
+  \item $\mathrm{Unif}(-\infty, \infty)$ or $\mathrm{Normal}(0, \infty)$. This represents an improper uniform prior.
+  \item $\mathrm{Normal}(0, 5^2)$. This represents a diffuse, very weakly informative prior. This is the choice for our primary analysis presented in the main text. 
+  \item $\mathrm{Normal}(0, 1)$. This represents a strongly informative prior that will regularize coefficients toward 0.
+\end{itemize}
+
+
+For the prior on the correlation matrices, we use the LKJ distributions \citep{Lewandowski2009}.
+The LKJ distribution's domain is the set of positive definite matrices with unit diagonals --- i.e., it is defined over the set of valid correlation matrices.
+It is governed by a single parameter $\eta >0$, which controls the concentration of the distribution around the identity matrix. 
+Under the $\mathrm{LKJ}(\eta)$ distribution, the marginal distribution of any off-diagonal entry is given by $\frac{\rho_{jj'}+1}{2} \sim \mathrm{Beta}(\eta - 1 + \frac{J}{2}, \eta - 1 + \frac{J}{2})$, where $J$ is the dimension of the matrix.
+That is, a beta distribution rescaled to the domain $(-1, 1)$.
+
+With $\eta = 1$, the LKJ distribution is uniform over all correlation matrices.
+In the two-outcome case $J = 2$, this corresponds to a prior over the correlation between outcomes of $\rho \sim \mathrm{Unif}(-1, 1)$. 
+With $\eta > 1$, the probability of observing large correlations (on the off-diagonals) decreases and as $\eta \to \infty$ the distribution collapses to a point mass on the identity matrix.
+With $\eta < 1$, the probability of observing large correlations increases.
+Thus, LKJ priors with large $\eta$ lead to small posterior correlations across outcomes, and subsequently small calibration updates as defined in Equation \ref{eq:estimator}.
+Our baseline is $\eta = 1$ (uniform, used in the main text). 
+We also consider $\eta = 0.25$ (regularized away from the identity matrix), $\eta = 3$ (weakly regularized toward the identity matrix), and $\eta = 10$ (strongly regularized toward the identity matrix).
+
+To perform the validation, we use the Michigan data to fit a model that predicts vote choice for governor and the abortion proposition using every combination of priors, with the same set of predictors as in the main text.
+We then compute the posterior correlation of county-level random effects across outcomes to demonstrate the effect of prior selection on the key parameter estimate for our calibration procedure. 
+Finally, to capture performance, we compute county-level estimates of support for the abortion proposition by calibrating to the county-level governor outcome and computing the mean squared error.
+
+
+\begin{figure}[tbh]
+  \caption{Estimated Correlation of County-Level Random Effects, by Choice of Priors}
+  \label{fig:cor-prior-sens}
+  \centering
+  \includegraphics[scale=.8]{michigan-prior-sensitivity-correlation.pdf}
+\end{figure}
+
+\begin{figure}[tbh]
+  \caption{Empirical Root Mean Squared Error at the County Level, by Choice of Priors}
+  \label{fig:rmse-prior-sens}
+  \centering
+  \includegraphics[scale=.8]{michigan-prior-sensitivity-rmse.pdf}
+\end{figure}
+
+
+
+Figure \ref{fig:cor-prior-sens} shows the posterior mean correlation in the random effects. 
+Mechanically, the estimated correlations decrease in the value of $\eta$ used in the prior.
+This implies that there will be larger updates when performing calibration when $\eta$ is smaller.
+The coefficient prior matters much less --- with estimated correlations being roughly equal regardless of whether an informative standard normal prior or an uninformative uniform prior is used for the coefficients.
+
+Figure \ref{fig:rmse-prior-sens} shows the consequences of these choices for downstream estimates. 
+It plots county-level RMSE, expressed in percentage points, across choice of priors. 
+We find that error is monotonically increasing in the choice $\eta$ in the correlation prior and is slightly lower when using stronger regularization on the coefficients. 
+The change in RMSE between $\eta = 0.25$ and $\eta = 1$ is small --- around 0.5 percentage points. 
+The jump from $\eta = 1$ to $\eta = 3$ is much larger, at around 1.5 percentage points, with $\eta = 10$ performing worse still. 
+
+
+These results suggest that, at least in this application, a prior that pulls correlation estimates away from 0 leads to lower error. 
+A caveat is that we have strong reason to think that the two outcomes we study are highly correlated --- both a priori, given the political context, and because of our analysis of the case.
+As a result, a prior distribution that places high probability density on large correlations should perform better than a prior that regularizes correlations toward 0. 
+If instead the outcomes were less correlated in the population than in our survey, a prior regularizing correlations toward 0 might perform better by reducing the magnitude of calibration updates.\footnote{See Appendix \ref{apx:covariance-assumption} for a discussion about misestimation of population-level correlations and Appendix \ref{apx:simulations} for simulations with outcomes that have varying population-level correlations.}
+
+All that said, we recommend using the uniform $\mathrm{LKJ}(1)$ prior on the correlation matrix.
+In our case, it performs nearly optimally and in general is a reasonable default choice.
+
+
+
+\clearpage
+\section{Extension to Precinct-Level Estimates}
+\label{apx:precinct}
+\input{sections/Precinct}
+
+
+\clearpage
+\section{Simulations}
+\label{apx:simulations}
+
+To further assess the performance of our proposed method under a range of scenarios, we conduct a series of simulations. We are interested in assessing the performance of the estimator as a function of the following parameters:
+\begin{itemize}
+  \item The population-level correlation between the outcome of interest and the auxiliary calibration variable(s).
+  \item The sample size of the survey.
+  \item Nonignorable selection into the survey sample. 
+\end{itemize}
+The first parameter is population-level. As the correlation between the calibration outcome and additional outcomes decreases, the magnitude of the correction shrinks to 0 --- and so our procedure should be less effective when the correlation is low. The second two parameters are sample-level. 
+
+For outcomes that are strongly correlated with the calibration variable, we find our procedure works extremely well across sampling regimes --- typically leading to a 20-30\% reduction in RMSE. 
+
+\subsection{Simulation Setup}
+
+We set up our simulation to emulate the most common use case that we foresee: estimating small-area public opinion with the help of a survey that measures policy attitudes and vote choice, plus geographic marginals on election outcomes. To do so, we generate a large ``population'' from the cumulative Cooperative Election Survey files \citep{CCESCumulative,CCESPolicy}. We identify two policy variables as our outcomes of interest, one of which has a low correlation with vote and one that has a large correlation with vote choice. Then, we simulate different surveys by drawing (potentially biased) samples from the population. We then estimate an MRP model and apply our calibration method to each sample. Finally, we summarize the performance of our estimator at estimating state-level opinion --- expressed in percentage reduction in root mean squared error relative to uncalibrated MRP estimates. 
+
+\paragraph{Population.} To create the population, we pool data from 2020 and 2022 and use (retrospective self-reported) 2020 vote choice as the calibration target. The variables of interest that we focus on are:
+\begin{enumerate}
+    \item Support/opposition to giving the Environmental Protection Agency power to regulate Carbon Dioxide emissions. This variable takes the value of 1 if respondents support the policy and 0 otherwise. The source variable is called \texttt{enviro\_carbon} in the CES Cumulative Policy file.
+    \item Support/opposition to state legislatures spending more on transportation and infrastructure. This question is asked as a 5-point increase/decrease Likert item on the CES, but we dichotomize it to take the value of 1 if respondents say they would prefer states to increase spending and 0 if they prefer state decrease or maintain current spending. The source variable is called \texttt{spending\_infrastructure} in the CES Cumulative Policy file.
+\end{enumerate}
+
+These items vary in their correlation with vote choice --- and thus the gains that we should expect to achieve from applying our calibration procedure.
+Table~\ref{tab:simregs} illustrates these relationships. 
+Using the full CES sample, we regress respondents' answers to these items on indicators for voting for Biden or Trump in the 2020 election (did not vote/other is the omitted baseline category), along with demographic covariates. 
+The first two columns show that there is a strong relationship between vote choice and support for the EPA regulating CO$_2$, while the latter two show that there is a weaker but nonzero relationship between support for infrastructure spending and vote choice. 
+The $R^2$'s show that 35\% of the variation in the CO$_2$ item is explained by vote choice, compared to 4\% for infrastructure spending. 
+
+\begin{table}
+    \caption{Relationship Between 2020 Vote and Attitudes on CO$_2$ Regulation and Infrastructure Spending}
+    \label{tab:simregs}
+    \centering
+    \input{\tabpath/ces-sim-full-regression.tex}
+    \capnotes{OLS regressions predicting the outcome variables as a function of vote choice, demographics, and state fixed effects. $^{*} p < 0.1$, $^{**} p < 0.05$, $^{***} p < 0.01$}
+\end{table}
+
+
+The full CES sample includes  $\inputy{\numpath/pseudopopulation-n.tex}$ respondents. 
+In line with other evaluations of MRP methods that take a large survey as the baseline truth \citep[e.g.,][]{BH:2013,LW:2017}, we take this large sample to be our ``population,'' from which we draw simulated survey samples. 
+
+\paragraph{Generating Samples.} We assess the performance of our estimator as a function of sample size and the extent of differential nonresponse. We run the simulations with small ($n =500$), medium ($n =1,000)$, and large ($n =10,000$) samples.  
+
+To parameterize differential nonresponse, we use a simple logit model. The probability of sample inclusion is modeled as $\pi_i \propto \invlogit(\mathrm{CO2}_i b_1 + Spending_i b_2)$, where the outcome variables here are coded as $-1$ or $1$ and the $\mbf{b}$ coefficients encode the extent of differential nonresponse. When $\mbf{b} = {0}$, then all units have the same probability of being included. 
+For example, suppose $b_1 = 0.25$ and $b_2 = 0$. 
+Then people who support the CO$_2$ regulation are $\frac{\invlogit(0.25)}{\invlogit(-0.25)} \approx 1.28$ times more likely to be sampled than people who oppose regulation. 
+
+We include three nonresponse scenarios: 
+\begin{enumerate}
+  \item No differential nonresponse: $b_1 = b_2 = 0$).
+  \item Moderate differential nonresponse: $b_1 = b_2 = 0.1$. In this scenario, people who answer 1 to both questions are about 1.22 times more likely to be sampled than people who answer 0 to both. 
+  \item Extreme differential nonresponse: $b_1 = b_2 = 1$. In this scenario, people who answer 1 to both questions are more than 7.3 times more likely to be sampled than people who answer 0 to both. 
+\end{enumerate}
+
+For each set of sample size $\times$ differential nonresponse parameters, we draw \inputy{\numpath/nsimsinner.tex} samples. 
+We use our calibration procedure on each, then compare our calibrated and uncalibrated state-level estimates to the true population values (from the full CES). 
+
+\paragraph{Estimation.} In the first step of MRP, we predict answers on the CO$_2$ and spending items, along with 2020 presidential vote, as a function of demographics, state-level covariates, and state random effects (which of course correlate across outcomes), using the following specification expressed in \textbf{brms} formula syntax:
+  
+\begin{scriptsize}
+\lstset{language=R}
+\begin{lstlisting}
+form <- bf(
+  mvbind(spending_infrastructure, enviro_carbon, pres_dem, pres_rep) ~ 
+
+    # individual-level predictors
+    gender + as.integer(agegrp) + race + educ +
+    
+    # random intercepts for demog categories
+    (1 | age | agegrp) + (1 | raceeduc | race:educ) + 
+    (1 | agerace | race:agegrp) +
+    
+    # state-level predictors
+    st_pct_nonwhite_z + st_pct_college_z + 
+    st_med_inc_z + st_demvs_2020_z +
+
+    # state-level random intercepts
+    (1 | s | state) 
+)
+\end{lstlisting}
+\end{scriptsize}
+
+We create simulated poststratification tables and calibration targets for \texttt{pres\_dem} and \texttt{pres\_rep} from the full CES population.
+For each simulated sample, we estimate the model, perform calibration, and poststratify to the state level. 
+We then compute the state-level root mean squared error (relative to the simulated population) to measure performance.
+
+To reduce the computational burden involved in this simulation exercise, we use a slightly modified version of the calibration estimator. 
+Rather than calibrating the cell-level estimates once for each posterior draw, we use a plug-in estimator.
+First, we compute the posterior mean of the covariance of geographic random intercepts, $\hat{\mbf{\Sigma}}$. 
+Second, we compute the (uncalibrated) predictions for each cell in the poststratification table.
+Third, we then shift these cell-level posterior means to match the known population margins for vote and update the estimates for policy attitudes using $\hat{\mbf{\Sigma}}$.
+In our experience, this plug-in method runs nearly an order of magnitude more quickly than full Bayesian inference, and produces very similar estimate.\footnote{In our experience, the plug-in and full Bayesian estimates correlate at greater than 0.99.%see 06-plugin-vs-bayes.R 
+}
+This estimation option is supported by our accompanying \texttt{R} package \texttt{calibratedMRP}.
+
+ 
+
+
+\subsection{Simulation Results}
+
+The results of each individual simulation is shown in Figure \ref{fig:sim-results} and the results are summarized across simulations in Table \ref{tab:simsummary}. 
+
+
+\begin{figure}[h]
+    \caption{Results of Simulations}
+    \label{fig:sim-results}
+    \centering
+    \includegraphics[scale=.7]{ces-simulation-results.pdf}
+    \capnotes{Each point is a simulated sample. The $y$-axis plots the percent change in root mean squared error from calibration, measured at the state level.}
+\end{figure}
+
+
+We find that our calibration procedure provides large reductions in error for Regulate CO$_2$, which is strongly correlated with the calibration variable, but provides much smaller improvements (and sometimes \textit{increases} error) for the infrastructure spending outcome, which is weakly correlated with the calibration variable. 
+This result suggests that researchers should exercise caution when applying calibration procedures to variables that are not strongly related to the auxiliary data of interest. 
+In the limit as the correlation goes to 0, there should be no effect of calibration whatsoever. 
+When there is a small population-level correlation, noise in the estimation of $\mbf{\Sigma}$ will overwhelm the signal and potentially worsen estimates. 
+
+When there is a moderately large correlation --- as with the CO$_2$ outcome --- we find that the calibration procedure can reduce error regardless of the size and quality of the sample. 
+Gains are relatively similar across sample sizes, on average. 
+
+The primary exception to the improvement in inference for the CO$_2$ outcome occurs when there is no differential nonresponse --- i.e., when there is a truly random sample --- and the sample size gets large. 
+In that case, the primary source of error in the uncalibrated estimates is sampling error, which goes to 0 as the sample size increases. 
+But if there is even moderate differential nonresponse, increasing sample sizes doesn’t improve the uncalibrated estimates, so calibration improves inference.
+
+
+Table \ref{tab:simsummary} also shows the average RMSE for each sampling regime, outcome, and calibration type. 
+The most important factor in generating errors is differential nonresponse.
+When there is extreme differential nonresponse, the average RMSE for the uncalibrated outcomes is often around 16 percentage points. 
+Calibration drives this error down moderately for the CO$_2$ outcome --- to around 12 percentage points --- but cannot eliminate it entirely. 
+
+The most notable exception to the general results in Table \ref{tab:simsummary} is that calibration can \textit{increase} RMSE for the infrastructure spending outcome --- particularly when the sample is large and differential nonresponse is absent. 
+For example, when there is no DNR and the sample size is 10,000, the RMSE for the infrastructure outcome increases from 0.029 to 0.030 after calibration.
+While this is more than a 5\% increase in  RMSE in relative terms, it represents a very small increase in absolute terms. 
+Still, it is worth commenting on this pattern. 
+
+We suspect that this pattern reflects an interaction between model misspecification and the strength of the correlation between the calibration and target variables.
+At small sample sizes, the uncalibrated MRP estimates contain substantial error from sampling variability and hierarchical shrinkage. 
+Even a weakly correlated calibration variable provides some useful geographic-level signal --- and noise in $\hat{\mbf{\Sigma}}$ partially attenuates the adjustment. 
+However, as the sample size increases, model misspecification may become a larger concern --- i.e., the logistic model with its specific set of predictors does not perfectly capture all geographic variation.
+When the correlation between outcomes is weak, the misspecification patterns for the calibration variable may not be representative of those for the target variable. 
+Meanwhile, at large sample sizes, $\hat{\mbf{\Sigma}}$ is estimated with less noise, so the calibration procedure confidently propagates incorrect adjustments.
+
+This discussion suggests that calibration is most beneficial when the estimated geographic random effect correlations between the calibration and target variables are moderate to strong.
+
+Overall, these results suggest that the calibration procedure can dramatically improve estimates when researchers have access to a calibration variable that is correlated with their outcome of interest. 
+These gains occur even in the presence of nonignorable nonresponse and small sample sizes. 
+These results suggest the promise of calibration for improving inference in small populations, even with non-representative survey data. 
+However, calibration is not a panacea, and care must be taken in selecting appropriate calibration variables.
+
+
+\begin{table}[h]
+      \caption{Summary of Simulation Results}
+      \label{tab:simsummary}
+    \begin{adjustbox}{max width=\textwidth}
+      \input{\tabpath/ces-simulation-rmse-reduction.tex}
+    \end{adjustbox}
+\end{table}
+
+
+
+
+\clearpage
+\section{Effect of Calibration on Party ID Estimates}
+\label{apx:pid}
+
+In our Michigan validation exercise, we also estimated the opinions on several items for which the true distribution is unknown.
+This was intentional because the primary advantage of the calibration we propose is to use the association between items reported in Table \ref{tab:mi-cors} to calibrate estimates whose truth is known to adjust estimates whose truth is unknown.
+It is obviously impossible to confirm the effects of this calibration on the accuracy of those estimates precisely because the truth is unknown, but the results suggest that the gains may be non-trivial.
+
+One measure we examine is self-reported partisanship.
+In some states, researchers have access to ground-truth data on partisanship from voter files. 
+Michigan, however, does not have partisan voter registration, and primaries are open to all voters.\footnote{\url{https://www.ncsl.org/elections-and-campaigns/state-primary-election-types}}
+Pollsters increasingly rely on partisanship in weighting procedures, but the lack of ground-truth data in states like Michigan limits the applicability of this approach. 
+Our method provides a way to improve estimates of partisanship by jointly estimating partisanship with sociodemographic variables, geographic variables, and sub-state calibration data.
+
+Because the association between partisanship and voting behavior is strong and well-documented, we can be confident that errors made in estimating county-level election results are also likely to be related to errors made in estimating county-level partisanship.\footnote{Note that it is also possible that the errors made in predicting vote share are a result of within-party differences (e.g., the partisans who respond vote differently than the partisans who do not).  Unfortunately, it is impossible to account for such patterns because it is impossible to verify this pattern without conducting a non-response analysis to compare the opinions of partisans who do and do not respond.  That said, most survey work finds very little variation in partisan voting behavior on statewide races between Democrats and Republicans.} 
+
+\begin{figure}[tb]
+  \centering
+  \caption{Democratic Party ID in Raw Survey Data, Uncalibrated MRP, and Calibrated MRP}
+  \label{fig:mi-pid-scatterplotmat}
+  \includegraphics[scale=.75]{mi-democratic-pid.pdf}
+\end{figure}
+
+Figure \ref{fig:mi-pid-scatterplotmat} reports the raw, estimated, and calibrated estimates for the percentage of Democrats in each county.
+The left-most column reports the distribution of self-identified Democrats in each county according to our survey data with standard demographic raking.\footnote{We generate these weights by raking to the Michigan-specific marginal distributions of the following variables: age, White/non-White indicator, gender, college educated, interactions between White $\times$ college, and 2020 presidential vote.} 
+The coarseness and skew of the estimates due to the small sample sizes in particular counties is clearly visible (e.g., some counties contain no Democrats in the survey data).
+The second row reports the results of estimating the percentage of Democrats in a county using a standard MRP model without calibration.
+Although modestly correlated with the raw survey estimates ($r =0.596$), the county-level MRP estimates are pulled closer to the overall average and there is no longer a cluster of counties with no Democrats.
+
+Calibrating the MRP estimates using the results of the Governor and Secretary of State elections reveals additional effects. 
+While the calibrated MRP estimates are highly correlated with the uncalibrated MRP estimates ($r = 0.868$) --- suggesting that the county-level adjustments largely preserve the rank ordering of the estimated percentages --- the calibrated estimates are only relatively weakly related to the raw survey estimates ($r=0.378$).
+As the bottom-right panel reveals, the calibrated MRP estimates are far less dispersed than either the uncalibrated MRP (center panel) or the raw survey averages (top-left panel).
+While the calibrated and uncalibrated estimates are clearly related (bottom center panel), the calibration reduces the variation in estimated county-level partisanship.
+
+\clearpage
+\section{Additional Tables and Figures}
+\label{apx:addl_tables}
+
+\subsection{County-Level Results}
+
+To explore the extent to which MRP errors are correlated with the underlying vote share for Governor, Figure \ref{fig:mi-change-result} compares how the percentage point change in estimates for the Secretary of State and Proposition 3 results relate to the Democratic Vote share in that county.  As the results make clear, the relationship is neither systemic nor linear.  Thus, the errors being made in the uncalibrated MRP are not larger or smaller for various levels of Democratic vote share -- suggesting that errors due to non-response or incorrect specification/weighting is not varying by the partisan composition of the county.
+
+
+
+
+Figure~\ref{fig:mi-errors} shows how county-level errors change from the unadjusted MRP estimates (top row), to the estimates calibrated to the Governor results (middle row), and finally to the estimates calibrated to both Governor and Secretary of State results (bottom row). Most of the reduction of error is achieved after calibrating to the Governor race. But as seen in the rightmost column, additional modest improvements are achieved by calibrating to both statewide races. 
+
+\begin{figure}[tb]
+	\centering
+	\caption{Change in County-Level Estimates from Calibration to Governor Results}
+ 	\label{fig:mi-change-result}
+ 	\includegraphics[scale=.75]{mi-calib-adjustment-by-gov-results.pdf}
+ 	\capnotes{The $y$-axis plots the difference between calibrated and uncalibrated county-level estimates for Michigan Secretary of State and the abortion proposition. The $x$-axis shows the county-level vote share for Governor.}
+% \end{figure}
+% \begin{figure}[tb]
+
+	\bigskip
+	\centering
+	\caption{County-Level Errors, 2022 Michigan Elections}
+	\label{fig:mi-errors}
+	\includegraphics[scale=.75]{mi-elections-error-reduction.pdf}
+	\capnotes{This plot shows how the county-level error change going from uncalibrated MRP estimates (top row), to estimates calibrated to county-level Governor results (middle row), to estimates calibrated to both Governor and Secretary of State results (bottom row). Negative values indicate underestimates of Democratic/pro-choice vote share.}
+\end{figure}
+
+
+Finally, Figure~\ref{fig:mi-errors-dens} plots the distribution of errors across calibration methods.
+The increase in accuracy is immediately obvious --- as is the limited gain from calibrating using both the Governor and Secretary of State races.
+It is also worth noting that even with the improved accuracy post-calibration, several counties have errors in excess of 5 percentage points in terms of support for Proposition 3.
+This is notable because 5 percentage points of error in the level reflects 10 percentage points of error in the margin.
+
+
+\begin{figure}
+	\centering
+	\caption{Distribution of County-Level Errors, Michigan 2022 Elections}
+	\label{fig:mi-errors-dens}
+	\includegraphics[scale=.7]{mi-election-error-density.pdf}
+	\capnotes{Positive (negative) values indicate an overestimate (underestimate) of Democrat/pro-choice support.}
+\end{figure}
+\subsection{Precinct-Level Results}
+
+To compare how the magnitude of the error changes post-calibration at the precinct level, we compare the distribution of calibrated and uncalibrated estimates against county-level known outcomes.  Figure \ref{fig:mi-errors-dens-prec} presents the results and shows a pattern similar to that which we observe in the county-level results.  The range of the precinct-level error of the uncalibrated estimates is large --- ranging from a 25 percentage point overstatement of Democratic support to a 50 percentage point understatement.  Once the results for the Secretary of State and abortion proposition are calibrated based on the errors made in the Governor race, however, the distribution of errors tightens considerable -- with most errors now occurring within a 10 percentage point range of the truth.  We can also see that the effect of the calibration is slightly more consequential at reducing an understatement of Democratic/pro-choice support than it is at reducing an overstatement.  This is especially true when considering the abortion proposition where the calibration does not greatly reduce the overstatement of pro-choice support at the precinct level.
+
+
+\begin{figure}
+	\caption{Distribution of Precinct-Level Errors, Michigan 2022 Elections}
+	\label{fig:mi-errors-dens-prec}
+	\includegraphics[scale=.7]{mi-precinct-election-error-density.pdf}
+	\capnotes{Positive (negative) values indicate an overestimate (underestimate) of Democrat/pro-choice support.}
+\end{figure}
+
+
+

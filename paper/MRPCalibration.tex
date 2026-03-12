@@ -1,0 +1,264 @@
+%% COMPILATION NOTE 
+% uses bibunits package for separate bibliography for appendix
+% to compile run 
+% pdflatex MRPCalibration  -- creates bu1 bu2 bibliography files
+% bibtex bu1
+% bibtex bu2
+% pdflatex -- again
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{dcolumn}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bbm}
+\usepackage{rotating}
+\usepackage{enumerate}
+\usepackage{mathrsfs}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{../output/figures/}{../output/figures/model-diagnostics/}}
+\newcommand{\tabpath}{../output/tables}
+\newcommand{\numpath}{../output/tables/numbers-in-text}
+\usepackage[hidelinks]{hyperref}
+\usepackage{subcaption}
+\usepackage[svgnames]{xcolor}
+\usepackage{makecell}
+\usepackage{adjustbox}
+
+\usepackage[mono=false]{libertine}
+
+
+% typsetting R code
+\usepackage{listings}
+\lstset{language=R,
+    basicstyle=\small\ttfamily,
+    stringstyle=\color{DarkGreen},
+    otherkeywords={0,1,2,3,4,5,6,7,8,9},
+    morekeywords={TRUE,FALSE},
+    deletekeywords={data,frame,length,as,character},
+    keywordstyle=\color{black},
+    commentstyle=\color{DarkGreen},
+}
+
+%% === bibliography packages ===
+\usepackage{natbib}
+\bibliographystyle{apsr}
+
+% separate appendix bibliography
+\usepackage{bibunits}
+\defaultbibliographystyle{apsr}     
+\defaultbibliography{library,AuxCalibration}
+
+
+
+\usepackage{setspace}
+\doublespacing
+\newcommand{\citepos}[1]{\citeauthor{#1}'s (\citeyear{#1})} % possessive citation
+
+
+\DeclareMathOperator*{\argmin}{arg\,min} 
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator*{\N}{\mathcal{N}}
+\DeclareMathOperator*{\V}{Var}
+\DeclareMathOperator*{\C}{Cov}
+\DeclareMathOperator*{\p}{\text{Pr}}
+\DeclareMathOperator*{\1}{\mathbbm{1}}
+\DeclareMathOperator*{\indp}{\perp\!\!\!\perp}
+\DeclareMathOperator{\Lik}{\mathcal{L}}
+\DeclareMathOperator{\lik}{\ell}
+\DeclareMathOperator{\fishi}{\mathscr{I}}
+\DeclareMathOperator{\indsim}{\overset{ind.}{\sim}}
+\DeclareMathOperator{\iidsim}{\overset{iid}{\sim}}
+\newcommand{\invlogit}{\text{logit}^{-1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\mbf}[1]{\mathbf{#1}}
+\newcommand{\bb}[1]{\mathbbm{#1}}
+
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{prop}{Proposition}
+\newtheorem{assm}{Assumption}
+\newtheorem{remark}{Remark}
+
+
+% caption goes in \caption{}, notes go underneath table/figure in \capnotes{}
+\newcommand{\capnotes}[1]{\footnotesize\caption*{\textit{Notes}: #1}} 
+\newcommand{\tinysec}[1]{\medskip\textbf{#1}}
+\newcommand{\inputy}[1]{\input{#1}\unskip} % gets rid of space after inputting file
+
+% add extra spacing in enumerate environment
+\addtolength{\jot}{.75em}
+
+%% For appendix TOC
+\usepackage[toc,page,header]{appendix}
+\usepackage{minitoc}
+\renewcommand \thepart{} % Make the "Part I" text invisible
+\renewcommand \partname{}
+
+% month-year date format
+\usepackage{datetime}
+\newdateformat{monthyeardate}{%
+\monthname[\THEMONTH] \THEYEAR}
+
+% change section header size. conflicts with apx TOC from minitoc
+% \usepackage{sectsty}
+% \sectionfont{\fontsize{13}{15}\selectfont}
+% \subsectionfont{\fontsize{12}{15}\selectfont}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\fontsize{13}{15}\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\fontsize{13}{15}\bfseries}{\thesubsection}{1em}{}
+
+
+% Editing modes - mark \todo, \tocheck
+\newcommand{\todo}[1]{{\color{red}[#1]}}
+\newcommand{\tocheck}[1]{{\color{red}#1 (CHECK THIS)}}
+
+
+% for blind submission switch this to 1
+\newcommand{\blind}{0}
+
+
+% uncomment to get rid of tables and figures for accurate work count
+% \usepackage{environ}
+% \RenewEnviron{figure}{}
+% \RenewEnviron{table}{}
+
+
+
+\title{Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities
+\if0\blind
+\thanks{%
+	For helpful comments we thank Larry Bartels, Devin Caughey, Shira Mitchell, Jacob Montgomery, John Sides, Matt Tyler, and panelists at the 2023 APSA panel on Developments in Survey Methods. An \texttt{R} package implementing methods proposed in this paper is available for download at \url{http://github.com/wpmarble/calibratedMRP}. 
+	}
+\fi
+}
+
+\if0\blind
+	\author{
+		William Marble\footnote{Hoover Fellow, Hoover Institution, Stanford University. Email: \href{mailto:wpmarble@stanford.edu}{wpmarble@stanford.edu}}
+	 \and 
+	 	Josh Clinton\footnote{Abby and Jon Winkelried Chair, Professor of Political Science, Department of Political Science, Vanderbilt University. Email: \href{mailto:josh.clinton@vanderbilt.edu}{josh.clinton@vanderbilt.edu}}}
+\fi
+
+
+
+
+
+\date{\monthyeardate\today}
+
+
+
+\begin{document}
+
+
+%%% Title Page %%%%
+\begin{singlespacing}
+\maketitle	
+\thispagestyle{empty}
+\begin{abstract}
+\input{sections/abstract}
+% ~\\\bigskip
+% Word Count: 10,000
+\end{abstract}
+
+
+\end{singlespacing}
+\newpage
+\clearpage
+
+
+%%% uncomment for table of contents %%%
+% \thispagestyle{empty}\tableofcontents\clearpage
+
+%%% these commands put an "introduction" section in the PDF's metadata
+\phantomsection
+\addcontentsline{toc}{section}{Introduction}
+
+%%% START OF MAIN TEXT %%%
+\setcounter{page}{1}
+
+%% start(appendix TOC)
+\doparttoc % Tell to minitoc to generate a toc for the parts
+\faketableofcontents % Run a fake tableofcontents command for the partocs
+%% end(appendix TOC)
+
+\begin{bibunit}
+\input{sections/introduction}
+
+
+\section{Survey Adjustment Using Multilevel Regression and Poststratification}
+\label{sec:mrp-overview}
+\input{sections/overview}
+
+
+\section{Calibrating a Single Outcome to Ground-Truth Data}
+\label{sec:singleadjust}
+\input{sections/singleadjust}
+
+
+\section{Adjusting Multiple Outcomes to Account for Ground-Truth Data}
+\label{sec:multiadjust}
+\input{sections/multiadjust}
+
+\section{Validation in Michigan Elections in 2022}
+\label{sec:validation}
+\input{sections/MichiganValidation}
+
+
+\section{Conclusion and Implications}
+\label{sec:conclusion}
+\input{sections/conclusion}
+
+
+\clearpage
+\begin{singlespace}
+% \bibliography{library.bib,AuxCalibration.bib}
+  \renewcommand{\refname}{References} % article class; for book/report use \bibname
+  \putbib  % uses \defaultbibliography and \defaultbibliographystyle
+
+\end{singlespace}
+\end{bibunit}
+
+
+\begin{bibunit}
+
+%%%%% APPENDIX %%%%%$
+\clearpage
+\appendix
+\singlespacing
+\setcounter{page}{0}
+\thispagestyle{empty}
+\addcontentsline{toc}{section}{Appendix} % Add the appendix text to the document TOC
+\vspace*{-1em}
+{\centering
+\LARGE\bfseries Improving Small-Area Estimates of Public Opinion\\ by Calibrating to Known Population Quantities\par
+\bigskip
+\Large\normalfont William Marble and Josh Clinton\par
+\vspace*{-1em}
+}
+\part{Appendix} % Start the appendix part
+\parttoc % Insert the appendix TOC
+\renewcommand\thefigure{\thesection\arabic{figure}}    
+\renewcommand\thetable{\thesection\arabic{table}}    
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\setcounter{footnote}{0}
+\newpage
+
+\input{sections/appendix}
+	
+
+  \clearpage
+  \renewcommand{\refname}{Appendix References} % heading for the appendix bib
+  \putbib
+\end{bibunit}
+
+\end{document}
+
+
+
+

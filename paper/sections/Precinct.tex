@@ -1,0 +1,55 @@
+
+In this appendix, we describe how our approach can be extended to generate estimates at even smaller levels of geography without the need for full poststratification data.
+This is important because estimating hyperlocal opinion is usually infeasible with MRP due to the absence of Census microdata needed for the poststratification. (E.g., see Appendix Section \ref{apx:poststrat} for more details about Census geography.)
+
+To generate opinion estimates for geographies where the poststratification table is unknown and unknowable, we leverage the fact that geographies are nested and the existence of available ground-truth data at the level of geographic interest. 
+Consider the problem of estimating precinct-level opinion.
+Although we lack the ability to poststratify to precincts (unless we are willing to rely on voter file demographics), we can poststratify at the county level using Census microdata and we know precinct-level election results. 
+We also know that precincts are nested within counties --- meaning that the county-random effect aggregates the precinct-level random effects from that county.
+
+These relationships suggest a method for extending our calibration approach to smaller, nested geographies for which the ground-truth of an outcome correlated with the outcomes of interest is known.
+First, we estimate a calibrated county level model as in the main text Section \ref{sec:validation}.
+Using the fact that precincts are nested within counties and the county-level random effect is analogous to an average of the precinct-level average effects, we then set the precinct-level random effect to match their estimated county-level random effects.
+We then apply our calibration method at the precinct level using the precinct-level variable whose truth is known.
+To extend the logit shift of the calibrated variable to the other precinct-level estimates, we then use the correlation matrix of county-level random effects.
+This approach relies on the assumption that the between-item correlation at the county level matches the between-item correlation at the precinct level.
+Using the implied precinct-level logit shifts, we then generate updated precinct-level estimates.
+
+\begin{figure}[tb]
+	\centering
+	\caption{Precinct-Level MRP Results, Michigan 2022 Elections}
+	\label{fig:mi-prec-elec-rs}
+	\includegraphics[scale=.7]{mi-precinct-elections.pdf}
+	\capnotes{The $x$-axis shows the true precinct-level Democratic/pro-choice vote share and the $y$-axis shows model-based estimates. The top row shows uncalibrated MRP estimates and the bottom row shows estimates calibrated to the Governor race.}
+\end{figure}
+
+We evaluate this proposed extension in the context of the 2022 Michigan elections.
+For the calibration step we collect precinct-level results from the Secretary of State website, and we use the same MRP model specified above as our initial estimates.
+After calibrating the county-level and precinct-level estimates to match the known outcome of the Governor election, we measure the reduction in error for precinct-level estimates for the Secretary of State election and the abortion proposition using the ground truth for each.
+
+Figure~\ref{fig:mi-prec-elec-rs} plots the true precinct-level vote shares for Governor, Secretary of State, and Proposition 3 against the modeled vote shares before and after calibration to Governor.\footnote{Appendix Figure~\ref{fig:mi-errors-dens-prec} plots the density of the precinct-level errors before and after calibration.}
+The horizontal bands visible in the top row of the plot are due to the fact that the unadjusted precinct-level estimates are constant within counties because the model does not vary within county due to the lack of precinct-level covariates or poststratification. 
+The fact that these bands are relatively wide indicates that there is substantial within-county heterogeneity in precinct election results.
+The bottom middle and bottom right panels show that calibrating the precinct-level random effects to match the results for Governor dramatically increases the quality of the precinct-level estimates for the other races. 
+The Secretary of State estimates line up relatively closely to the 45-degree line, and the abortion proposition estimates are centered around the 45-degree line but with higher variance.
+
+\begin{table}[tb]
+	\centering
+	\caption{Precinct-Level Errors,  Michigan 2022 Elections}
+	\label{tab:mi-prec-error}
+	\input{\tabpath/michigan-precinct-calibration-error-reduction.tex}
+	\capnotes{Entries in the table show the precinct-level error associated with uncalibrated and calibrated MRP vote share estimates for the Democrat/pro-choice outcome. The first row for each race is the error when we impute county-level estimates to the precinct level, assuming all precincts within the same county are homogenous. The second row is the error when calibrating precinct-level estimates to the outcome of the governor election.}
+\end{table}
+
+The reduction in error is summarized in Table~\ref{tab:mi-prec-error}. The precinct-level RMSE for Secretary of State is reduced from 
+\inputy{\numpath/sos-rmse-precinct-uncalib.txt}
+to
+\inputy{\numpath/sos-rmse-precinct-calib.txt}
+percentage points, a reduction of nearly 75\%.
+The RMSE for Proposition 3 is reduced from \inputy{\numpath/prop3-rmse-precinct-uncalib.txt}
+to
+\inputy{\numpath/prop3-rmse-precinct-calib.txt}
+percentage points, a reduction of around 60\%.
+Notably, the precinct-level errors for the calibrated estimates are significantly lower than the county-level errors for the uncalibrated estimates, even though the MRP model was specifically meant to generate county-level estimates and precinct-level data and poststratification information was not used in the estimation. 
+This result highlights the large amount of information available in ground-truth results for auxiliary variables and how that information can be used to extend MRP to estimate outcomes in smaller, nested geographies by leveraging correlated outcomes and the marginal distribution of known outcomes. 
+

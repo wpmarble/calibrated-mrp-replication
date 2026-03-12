@@ -1,0 +1,28 @@
+
+Estimates of public opinion are critically important for assessing representation, accountability, and democratic legitimacy. But inferences based on comparing constituency-level opinion to policy outcomes require accurate, fine-grained measures of public opinion — measures that are increasingly difficult to obtain given declining response rates and growing nonignorable nonresponse. As a result, it is often unclear whether discrepancies between public opinion and policy reflect failures of representation or failures of polling.
+
+We propose a method that limits the impact of survey errors on small-area opinion estimates by leveraging auxiliary data with known ground truth.
+Building on the logit shift calibration framework common in MRP, we extend the approach to multiple correlated outcomes.
+The key insight is that discrepancies between model-based and ground-truth estimates for auxiliary variables (e.g., election results) are informative about likely survey errors for correlated outcomes for which no  ground truth exists (e.g., policy attitudes). 
+We propose a principled calibration method building on this intuition. 
+The calibration is driven by geographic random effect correlations estimated from a joint model of all outcomes.
+The method produces larger adjustments for more highly correlated variables. 
+We also show how this approach can be extended to hyperlocal geographies lacking poststratification data, such as precincts, by calibrating to ground-truth margins at the lower level (Appendix \ref{apx:precinct}).
+
+Using pre-election polling from the 2022 Michigan midterm, we demonstrate that calibrating county-level MRP estimates to gubernatorial results reduces error by as much as two-thirds. 
+We find similar gains when extending the approach to precinct-level results.
+
+
+A key benefit of our approach is that it can correct for multiple sources of survey error --- nonignorable nonresponse, model misspecification, and errors in poststratification data --- without requiring researchers to decompose the contribution of each source. 
+As demonstrated by simulations in Appendix \ref{apx:simulations}, our calibration procedure is most beneficial when the calibration variable is strongly correlated with the outcome of interest and when nonignorable nonresponse is present. 
+Even with small, highly nonrepresentative samples, calibration substantially reduces error for correlated outcomes.
+
+The method relies on the covariance equivalence assumption, which states that the geographic correlation structure estimated from the survey reflects the population-level correlations. 
+In Appendix \ref{apx:covariance-assumption}, we demonstrate the plausibility of this assumption in our validation setting.
+Of course, this assumption may not always hold, particularly if survey respondents' attitudes are more correlated than those of nonrespondents. 
+However, the alternative --- standard MRP without calibration --- implicitly assumes that observed errors in auxiliary variables are completely uninformative about errors in other outcomes.
+Our approach is likely to improve estimates even when the assumption is not perfectly met.
+
+By providing researchers with a principled method for incorporating known population quantities into MRP estimates, we help ensure that substantive conclusions based on small-area opinion measures are robust to survey error. 
+The method complements existing MRP tools. 
+Finally, our method can be implemented using our accompanying \texttt{R} package, \texttt{calibratedMRP}.

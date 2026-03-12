@@ -1,0 +1,140 @@
+
+
+
+Discrepancies between model-based predictions and ground-truth data reveal information about the structure of survey-based error across outcomes.
+We extend the logit shift to multiple outcomes by relying on the fact that errors in one variable are often informative about errors in others.
+The basic idea is to estimate the correlation between the variables whose true outcomes are known and other variables with unknown ground-truth data.
+We use these correlations, along with the logit shift parameters for variables with ground-truth data, to estimate the implied logit shifts for other variables. 
+
+Consider the task of estimating opinion on increasing income taxes and changing local zoning regulations from a survey that also measures presidential vote choice.
+Using MRP, we generate population estimates of all three outcomes and apply the logit shift to ensure model-based presidential vote share estimates match actual results.
+
+Our contribution is to note that discrepancies between model-based predictions of vote share and the actual outcome are informative about errors in survey-based estimates of opinion on income taxes and zoning.
+Of course, opinions on these two issues are not equally correlated with presidential vote choice: vote choice is likely more correlated with attitudes on taxes than on zoning.
+As a result, the survey error in presidential vote choice is likely more similar to the survey error in tax preferences than in zoning preferences.
+Our method formalizes this intuition and provides a principled, data-driven method for both estimating this correlation and updating survey estimates to account for this error.
+
+First, we specify a model for all outcomes, including both outcomes of interest (without ground truth data) and auxiliary variables (with ground truth data).\footnote{Our approach does not directly model the joint distribution of outcomes at the individual level. That is, we do not directly estimate the probability of observing the vector $\mbf{y}_i = (y_i^1, y_i^2, \dots, y_i^J)$. Instead, we model the marginal distributions in a way that shares information across outcome models. For a related contribution that directly models the joint distribution, see \citet{Goplerud2025} and our discussion in Appendix \ref{apx:otherwting}.}
+The joint model includes random effects for geography that are allowed to correlate across outcomes. 
+This approach is conceptually similar to seemingly unrelated regression \citep{Zellner1962}, in which multiple outcomes are stacked and the error variance is correlated  across outcomes within individuals (or, in our case, within geographies).
+Next, we update estimates of auxiliary variables to ensure they match known population margins using the logit shift method outlined above. 
+Rather than viewing the logit shift as an ad-hoc adjustment, we interpret the sum of the logit shift parameter and the estimated random effect as the \textit{realized} random effects --- the actual geographic-level intercept implied by the ground-truth data.\footnote{In the mixed effects and small area estimation literature, random effects are ``predicted'' from noisy data \citep{Robinson1991}. Our point is that when ground truth is available, the prediction problem collapses and the value is directly revealed.} 
+We then condition on the realized random effects and compute the conditional expectation of the random effects for the target variables. 
+With joint normal random effects, this expectation is a simple linear function of the realized logit shifts for the auxiliary variables, with coefficients determined by the covariance across outcomes.
+
+
+
+\subsection{Multivariate Outcome Model}
+
+Recall that our estimand is opinion on $J$ issues with true values $\theta^j$. For each respondent $i$ we observe binary responses $y_i^j$ and demographic cell membership $c$.
+Each cell has a demographic covariate vector $\mbf{x}_{c}$ and a geographic covariate vector $\mbf{z}_{g[c]}$.
+We model $y_i^j$ using a multivariate logit model with demographic and geographic covariates. We include a random intercept for each geography $g$. Conditional on covariates, responses across issues are assumed independent.
+
+
+The model for each issue $j$ is given by:
+\begin{equation}
+\begin{aligned}
+	y^j_i &\sim \text{Bernoulli}(\theta_{c[i]}^j) \quad \text{for $j \in 1, \dots, J$}\\
+	\theta_{c}^j &= \invlogit\left( \alpha_{{g}[c]}^j +    \mbf{x}_c'\beta^{j} +   \mbf{z}_{{g}[c]}'\gamma^{j}   \right)  \label{eq:basic}
+\end{aligned}
+\end{equation}
+where $\beta^j$ and $\gamma^j$ are vectors of coefficients on the demographic and geographic predictors, respectively. 
+The parameter $\alpha_{{g}[c]}^j$ is a random intercept for item $j$ that varies by geography.\footnote{It is also common to include additional random effects for demographic groups \citep{GG:2013}. We include these additional random effects in our empirical application below, and we also allow them to correlate across outcomes. However, we omit them in the presentation here for expositional clarity, as presenting them would require additional notation.}
+To permit partial pooling \citep{Gelman2007}, we specify a hierarchical multivariate normal distribution for the random intercepts: 
+\begin{align}
+	&(\alpha_{{g}}^1, 	\alpha_{{g}}^2, \dots, \alpha_{{g}}^J) \sim \text{MultivariateNormal}(\mbf{0}, \mbf{\Sigma}). \label{eq:mvn}
+\end{align}
+The covariance matrix $\mbf{\Sigma}$, estimated from the data, encodes the within-geography correlation across outcomes after accounting for other model terms. We use $\mbf{\Sigma}$ to predict logit shifts for outcomes without ground-truth data.
+
+This model nests the traditional approach of estimating separate regressions for each outcome. This approach corresponds to constraining $\mbf{\Sigma}$ to be diagonal --- sharing no information about geographic random effects across outcomes.
+
+\subsection{Calibration Procedure}
+
+We reinterpret the logit shift as the residual between the \textit{estimated} random effect $\hat{\alpha}_{g}^j$ and the \textit{realized} geographic intercept. Substitute Equation~\eqref{eq:basic} into the  expression for the updated cell-level probabilities after calibration in Equation~\eqref{eq:updatedprobs}:
+\begin{align*}
+	\tilde{\theta}^{j}_c &= \invlogit\left(\delta_{g[c]}^j + \text{logit}(\hat{\theta}_c^j)  \right) \\ 
+	              &= \invlogit\left(\smash{\underbrace{\delta_{g[c]}^j + \hat{\alpha}_{{g}[c]}^j}_{\text{realized intercept}}} +  \mbf{x}_c' \hat{\beta}^{j} +  \mbf{z}_{g[c]}' \hat{\gamma}^{j} \right)
+\end{align*}
+Because the updated probabilities ensure that model-implied geographic estimates match observed ground truth, the logit shift $\delta^j_g$ can be interpreted as the residual between the \textit{estimated} intercept $\hat{\alpha}_g^j$ and the \textit{realized} intercept $\delta^j_g + \hat{\alpha}_g^j$.
+
+
+This perspective suggests a method for predicting logit shifts for outcomes with unknown ground truth. 
+We invoke a \textit{covariance equivalence assumption}: the covariance of $\delta_g^j$ equals the covariance of geographic random intercepts estimated from the survey. 
+More formally, we assume $(\delta_g^1, \dots, \delta_g^J) \sim \text{MultivariateNormal}(\mbf{0}, \mbf{\Sigma})$, where $\mbf{\Sigma}$ is the same as in Expression \ref{eq:mvn}.
+The upshot of this assumption is that we can use the survey to estimate the correlation in \textit{realized} random effects.\footnote{We discuss this assumption further in Section \ref{sec:assms} and in Appendix \ref{apx:covariance-assumption}.}
+
+We observe logit shifts for the auxiliary variables with ground-truth data. 
+Denote the vector of observed logit shifts $\delta_g^{\mbf{o}}$ and the vector of unknown logit shifts $\delta_g^{\mbf{u}}$.
+Conditional on the observed shifts, the expected value of unobserved logit shifts has a linear form:\footnote{Equation~\eqref{eq:estimator} follows from the standard formula for the conditional expectation of a multivariate normal distribution. This expression is related to the Schur complement: the corresponding conditional covariance matrix involves the Schur complement of $\mbf{\Sigma}_{\mbf{oo}}$ in the full covariance matrix $\mbf{\Sigma}$.}
+\begin{align}
+	E[\delta_g^\mbf{u} \mid \delta_g^\mbf{o}] &= \mbf{\Sigma}_{\mbf{uo}} \mbf{\Sigma}_{\mbf{oo}}^{-1} \delta_g^\mbf{o}. \label{eq:estimator}
+\end{align}
+In this equation, $\mbf{\Sigma}_{\mbf{uo}}$ is the cross-covariance in random effects between the unobserved and observed elements and $\mbf{\Sigma}_{\mbf{oo}}^{-1}$ is the inverse of the covariance of the observed elements.
+This expression follows from the properties of the multivariate normal distribution \citep[116]{Eaton2007}.
+
+
+
+
+In other words, the logit shift parameters for the outcomes without ground-truth data are a linear combination of the logit shifts for the outcomes with calibration data. 
+The coefficients in this linear combination depend on the covariance in the geographic random effects across outcomes, with higher weights going to the logit shift of outcomes with higher covariance.  
+
+To build intuition, consider the case of a single observed auxiliary outcome ($j=1$) and a single unobserved outcome ($j=2$). \label{page:twooutcomes}
+The predicted logit shift is $E[\delta^2_g\mid \delta_{g}^{1}]  = \rho \frac{\sigma_{2}}{\sigma_1} \delta_g^1$, where $\rho$ is the correlation between random effects and $\sigma_1$, $\sigma_{2}$ are their standard deviations. 
+The correlation controls the magnitude, while the ratio of standard deviations corrects for scale differences.
+If $\rho = 1$, the logit shift for the unobserved outcome equals the observed shift (up to a scale adjustment). 
+If $\rho = 0$, the observed shift is uninformative and no adjustment is made.
+
+
+\subsection{Assumptions and Limitations}
+\label{sec:assms}
+
+In this section, we discuss several points related to the covariance equivalence assumption, which we rely on to derive the estimator. 
+
+First, this assumption could be violated if respondent correlations differ from those in the population. 
+For example, because survey respondents are often highly educated and more politically interested than the public, their attitudes may be more correlated across issues than those of the general public \citep{Marble2022a,Freeder2018,H:2023}.
+Although strong, this assumption is almost certainly better than the traditional MRP default, which implicitly assumes no correlation.
+Other weighting methods make similar assumptions: raking, for example, can over-correct when the sample correlation between an underrepresented group and the outcome exceeds the population correlation. 
+
+
+
+Second, the scale of the random effects estimated in the survey might differ from the scale of the true intercept shifts needed for calibration.
+This form of error affects inferences only when there is differential error in the survey-based estimate of the variances in $\mbf{\Sigma}$ across outcomes.
+To be more precise, consider the scale-correlation factorization of $\mbf{\Sigma} = D \Omega D$, where $\Omega$ is the correlation matrix and $D = \text{diag}(\sigma_1, \dots, \sigma_J)$ are standard deviations. If our estimate of each element of $D$ is off by a common factor, such that $\hat{D} = k D$ for a scalar $k$, then the point estimates of our method are unaffected, but if different elements of $D$ are estimated with differential error, it could lead to over- or under-updating. 
+
+Appendix \ref{apx:covariance-assumption} discusses these points further and provides empirical evidence for the plausibility of the covariance equivalence assumption in our application. 
+
+
+
+\subsection{Estimation}
+\label{sec:estimation}
+Estimation proceeds by first fitting the multivariate model in Equations \eqref{eq:basic}--\eqref{eq:mvn} to survey data. 
+Next, we poststratify and calculate logit shifts for outcomes with ground truth following Equation \eqref{eq:logitshift}. Finally, we apply Equation \eqref{eq:estimator} to update the remaining outcomes.
+
+The simplest option is a plug-in estimator for $\mbf{\Sigma}$ (e.g., the MLE or posterior mean). In our application, we adopt a fully Bayesian approach.
+For each posterior draw: calculate logit shifts for observed outcomes; predict implied shifts for unobserved outcomes; update unobserved outcomes; and poststratify. We summarize results using the posterior mean.
+See Appendix \ref{apx:bayesest} for a formal description.\footnote{Our accompanying software supports both full Bayesian estimation described here and plug-in estimation, which is less computationally costly. The fully Bayesian approach is theoretically preferable, as it correctly propagates uncertainty through the nonlinear model, but empirically we have found the point estimates from either procedure to be nearly identical.}
+
+\subsection{Comparison with Alternative Approaches}
+\label{sec:comparison}
+
+Our procedure uses observed estimation error in a subset of outcomes to adjust others. Several alternative approaches exist, which we briefly discuss here and more fully in Appendix \ref{apx:otherwting}.
+
+First, classic weighting methods like raking can use known margins as weighting targets. But, without an outcome model, the survey must contain respondents from each geographic unit, making it infeasible for estimating opinion in small subgroups. 
+Second, known margins can be included as geographic predictors in the regression. 
+This approach likely improves estimates, but it does not guarantee that they match known margins.
+Our calibration procedure can be applied in conjunction with this approach to reduce remaining error.
+Third, researchers can generate synthetic poststratification tables (MRsP; \citealt{LW:2017}). The appendix discusses two variants: assuming conditional independence between demographics and the calibration variable (``conventional MRsP'') or using a first-stage calibrated MRP model as the poststratification table for a second stage (``chained calibrated MRP'').
+Our approach sidesteps the need to impute this poststratification table, and instead estimates multiple outcomes jointly. 
+
+
+
+\subsection{Extension to Hyperlocal Geography}
+
+
+Our approach can be extended to smaller geographies  lacking poststratification data but with ground-truth calibration data. 
+For example, we can use it to estimate opinion in precincts, where election results are available but poststratification data are not.
+To do so, we initialize precinct-level predictions to their corresponding county-level values.
+We then calibrate using observed precinct-level vote share, assuming the precinct-level correlation structure matches the estimated county-level structure.
+While this assumption need not hold --- particularly if there is significant heterogeneity across precincts within counties --- in our application it performs well.
+This extension enables hyperlocal opinion estimation even without poststratification data or fine-grained geographic identifiers in the survey.
+Appendix \ref{apx:precinct} describes this extension further and validates its performance.
