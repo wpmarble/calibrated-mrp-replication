@@ -79,7 +79,7 @@ county_intercept_cov <- get_re_covariance(
 
 # Load precinct results ---------------------------------------------------
 print("loading precinct results...")
-prec <- read.csv("data/michigan-precincts/michigan22.csv")
+prec <- read.csv("data/elections/MichiganPrecincts2022.csv")
 fips <- read.csv("data/census/county-fips.csv") %>% 
   filter(state == "MI") %>% 
   mutate(name = str_remove(name, "County")) %>% 
