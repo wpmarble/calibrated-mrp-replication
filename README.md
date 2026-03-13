@@ -37,9 +37,9 @@ CES files are too large to bundle. The script `code/download-ces-data.R` downloa
 
 The following raw data sources were used to construct the processed datasets above. They are not required to run the replication but are documented for transparency.
 
-**ACS poststratification tables** (`data/poststrat/`): Built from IPUMS USA microdata (ACS 2016-2020 5-year estimates). Cross-tabulates age x race x gender x education at the state level (with detailed Hispanic coding) and county level (240 cells per county for Michigan). County allocation uses PUMA-to-county crosswalks with 2010 Census population-based allocation factors (`data/census/puma2010-to-county.csv`). Script: `code/00-build-poststrat-tables.R` (requires IPUMS microdata extract, not redistributed).
+**ACS poststratification tables** (`data/poststrat/`): Built from IPUMS USA microdata (ACS 2016-2020 5-year estimates). Cross-tabulates age x race x gender x education at the state level (with detailed Hispanic coding) and county level (240 cells per county for Michigan). County allocation uses PUMA-to-county crosswalks with 2010 Census population-based allocation factors (`data/census/puma2010-to-county.csv`). Script: `code/00-build-poststrat-tables.R`. This script requires IPUMS microdata extract, which is not redistributed here. See `data/census/acs_micro_2020_cbk.txt` for the codebook from the extract.
 
-**Election results** (`data/elections/`): Processed from MIT Election Data + Science Lab county presidential returns (https://doi.org/10.7910/DVN/VOQCHQ) and McDonald turnout data (https://www.electproject.org). Michigan 2022 precinct results from Michigan Secretary of State (https://mielections.us/). Script: `code/00-build-election-results.R` (requires raw election files, not redistributed).
+**Election results** (`data/elections/`): Processed from MIT Election Data + Science Lab county presidential returns (https://doi.org/10.7910/DVN/VOQCHQ) and Michael McDonald turnout data (https://www.electproject.org). Michigan 2022 precinct results from Michigan Secretary of State (https://mielections.us/).
 
 **Census demographics** (`data/census/nhgis*.csv`): ACS 2016-2020 5-year estimates from NHGIS (https://nhgis.org), Table B03002 (Hispanic/Latino origin by race).
 
@@ -90,6 +90,7 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 | File | Description |
 |---|---|
 | `code/functions.R` | Shared utility functions  |
+| `code/00-build-poststrat-tables.R` | Build poststratification tables from IPUMS ACS microdata |
 | `code/prep-survey-data.R` | Prepare SurveyMonkey survey data |
 | `code/prep-covariates.R` | Load poststratification tables and build geographic covariates |
 | `code/download-ces-data.R` | Download CES files from Harvard Dataverse (run by `run.sh`) |
@@ -114,14 +115,6 @@ By default, pre-estimated model fits in `data/frozen/` are used to avoid long co
 | `code/ces-simulations/02-ces-simulations.R` | Run CES simulation study (configurable N_SIMS) |
 | `code/ces-simulations/03-summarize-ces-sims.R` | Summarize and plot simulation results |
 
-### Data Provenance Scripts
-
-These scripts document how raw data sources were processed into the analysis-ready files in `data/`. They are **not** run by `run.sh` and require data files that are not redistributed.
-
-| File | Description |
-|---|---|
-| `code/00-build-poststrat-tables.R` | Build poststratification tables from IPUMS ACS microdata |
-| `code/00-build-election-results.R` | Process election results into analysis-ready format |
 
 ## Output Mapping
 

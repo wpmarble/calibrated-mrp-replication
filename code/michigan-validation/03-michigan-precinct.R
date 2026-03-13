@@ -131,7 +131,7 @@ precincts <- prec %>%
 
 if (rerun){
   out <- future_map(seq_along(draw_ids), 
-                    .progress = TRUE,
+                    .progress = FALSE, # nice for interactive runs, bad for logging
                     .f = ~ {
     draw <- .x
     
