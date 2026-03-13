@@ -102,7 +102,8 @@ sm = sm %>%
 ## Add binary variables ----------------------------------------------------
 
 
-## Pick out questions to use in IRT model
+## Turning these into binary variables. Suffix is IRT b/c they were at one 
+## point used for IRT, though not in the PA paper. 
 sm = sm %>% 
   mutate(
     pres2020_irt = presvote2020_twoparty,

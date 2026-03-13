@@ -1,12 +1,6 @@
 
 
 
-# function to get z score divided by 2 (make sd = .5)
-z_score2 = function(x, na.rm=TRUE){
-  (x - mean(x, na.rm=na.rm)) / (2*sd(x, na.rm=na.rm))
-}
-
-
 
 
 # Prepare Poststratification Table ----------------------------------------

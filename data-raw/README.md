@@ -9,15 +9,12 @@ transparency and are **not** run by `run.sh`.
 ### SurveyMonkey 2022 Survey Data
 - **File**: `data/survey/CleanedSM_Weighted.rds`
 - **Source**: SurveyMonkey river sample, Fall 2022
-- **Cleaning script**: The original cleaning code is in `PrepareSM22data.R`
-  (located in the project's `code/cleaning-prep/` directory). The cleaned file
-  is included directly in this replication package.
+- **Cleaning script**: `code/prep-survey-data.R`
 
 ### ACS Poststratification Tables
 - **Files**: `data/poststrat/ACS_poststrat_2020_hispanic.rds` (state-level),
   `data/poststrat/ACS_poststrat_county_2020.rds` (county-level)
-- **Source**: American Community Survey 5-year estimates (2016-2020) via
-  [IPUMS USA](https://usa.ipums.org/)
+- **Source**: American Community Survey 5-year estimates (2016-2020) via IPUMS USA
 - **State-level creation**: `TargetsACS.R` creates state-level tables from ACS
   microdata, cross-tabulating age × race × gender × education × state.
 - **County-level creation**: County-level poststratification tables were
@@ -50,13 +47,10 @@ transparency and are **not** run by `run.sh`.
 
 ### FIPS Code Lookups
 - **Files**: `data/census/state-fips.csv`, `data/census/county-fips.csv`
-- **Source**: U.S. Census Bureau
 
 ### Michigan Precinct Results
 - **File**: `data/michigan-precincts/michigan22.csv`
-- **Source**: [Michigan Secretary of State](https://mielections.us/) — 2022
-  general election precinct-level results
-- **Processing**: Collected and standardized from county-level PDF/CSV filings
+- **Source**: [Michigan Secretary of State](https://mvic.sos.state.mi.us/votehistory/) — 2022 general election precinct-level results
 
 ### Cooperative Election Study (CES)
 - **Files**: Downloaded to `data/ces/` by `download-ces-data.R`

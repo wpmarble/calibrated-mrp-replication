@@ -7,14 +7,12 @@
 #  - state
 #  - education
 #  - gender
-#  TODO: add ancestry for 2016. currently only includes ancestry for 2020.
-#  TODO: add family income
-#  TODO: county level -- requires mapping between PUMAs and counties
+
 
 # Current years covered:
 #   - 2020
 #   - 2016
-#   TODO: 2008, 2012
+
 
 
 library(tidyverse)
@@ -183,39 +181,6 @@ for (y in c(2016, 2020)){
   
   
   # Generate Marginals ------------------------------------------------------
-  
-  ## From Josh:
-  
-  # 1) ACS of over 18 using:Age, Race, Education, College, Race by Education (or, 
-  # at least White by Education).  Maybe also Race by Education by age ? [WEIGHT 1]
-  # - This will get us the VAP demographics (
-  #   which is what CCES weights on — FYI Doug Rivers has some interesting recent 
-  # tweets on weighting and discussing the NYT /  SIenna poll weighting being 
-  # done right now by Nate Cohn).
-  # 
-  # 2) CCES 2020
-  # - The CCES original weights are weighted to the VAP.  We confirm that weighting
-  # to the weighted CCES variables listed in 1 get us similar results to confirm. [WEIGHT 2]
-  
-  # - If so, then we can add other variables — e.g., we could use PID3 (or PID7), 
-  #   or other opinion variables to construct similar targets to see how much the 
-  #   results change. [WEIGHT 3]
-  # 
-  # - Then we can use the CCES to try to model the electorate in 2020.  
-  #   [Same procedure would be used to o 2018, 2016, 2014]
-  
-  # - Take CCES and then restrict to self - reported likely voters.  Then reweight 
-  #   the weighted result to the actual national vote (could do this state by state ?
-  # ) by multiplying the original weight by the appropriate fraction.  Then use the re -
-  #   weighted weighted distribution of desmpgraphics to identify targets and
-  #   weight results to those targets. That would be the likely 2020 electorate. [WEIGHT 4]
-  
-  # - We could also do the same thing but restricted to validated voters.  Take 
-  #   data, subset to validated voter, reweight to match national popular vote 
-  #   based on weighted self -
-  
-  #   report, compute re - weighted demographic targets, weight.  This would be the actual 2020 electorate. [WEIGHT 5]
-  # - For each of these [WEIGHT 4, WEIGHT5] we can then add additional variables (e.g., libcon, pid, etc.) [WEIGHT 6, 7]
   
   age_margins = ps %>% 
     group_by(agegrp) %>% 

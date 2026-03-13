@@ -56,10 +56,12 @@ for (ds in datasets) {
     # List files in the dataset to find the right one
     ds_files <- dataset_files(ds$doi, server = "dataverse.harvard.edu")
 
-    # Find the target file
+    # Find the target file. Dataverse ingests .dta files and relabels them
+    # as .tab, so also search for the .tab version of the filename.
+    search_names <- unique(c(ds$file, sub("\\.dta$", ".tab", ds$file)))
     target <- NULL
     for (f in ds_files) {
-      if (f$label == ds$file) {
+      if (f$label %in% search_names) {
         target <- f
         break
       }
@@ -72,8 +74,9 @@ for (ds in datasets) {
       next
     }
 
-    # Download the file
-    raw <- get_file_by_id(target$dataFile$id, server = "dataverse.harvard.edu")
+    # Download in original format (e.g. .dta rather than ingested .tab)
+    raw <- get_file_by_id(target$dataFile$id, server = "dataverse.harvard.edu",
+                          format = "original")
     writeBin(raw, dest_file)
     message("  Saved: ", dest_file, " (",
             round(file.size(dest_file) / 1e6, 1), " MB)")
