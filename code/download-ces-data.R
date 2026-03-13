@@ -5,7 +5,7 @@
 ## with the replication package due to their size.
 ##
 ## Requires: dataverse R package
-## Usage: Rscript data-raw/download-ces-data.R
+## Usage: Rscript code/download-ces-data.R
 
 library(dataverse)
 

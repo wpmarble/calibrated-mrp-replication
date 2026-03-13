@@ -71,7 +71,7 @@ Rscript code/session-info.R 2>&1 | tee -a "$LOG"
 
 # ---- Download CES data (needed for CES simulation pipeline) ----
 log "[1/9] Downloading CES data (if needed)... $(date)"
-Rscript data-raw/download-ces-data.R 2>&1 | tee -a "$LOG"
+Rscript code/download-ces-data.R 2>&1 | tee -a "$LOG"
 
 # ---- Michigan validation pipeline ----
 log "[2/9] Preparing Michigan data... $(date)"
