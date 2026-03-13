@@ -9,6 +9,8 @@
 
 This archive contains all code and data needed to reproduce the results in the paper.
 
+All code was originally written manually.  Claude Opus 4.6 assisted in refactoring some code to create this self-contained replication package.
+
 ## Data Availability
 
 | Data Source | Provided | Notes |
