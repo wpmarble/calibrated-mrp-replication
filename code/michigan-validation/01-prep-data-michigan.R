@@ -17,7 +17,7 @@ library(calibratedMRP)
 
 source("code/functions.R")
 source("code/prep-survey-data.R")
-source("code/prep-poststrat-tables.R")
+source("code/prep-covariates.R")
 
 
 

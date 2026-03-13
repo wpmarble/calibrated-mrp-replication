@@ -1,6 +1,9 @@
-
-
-
+## Prepare poststratification tables and geographic covariates
+##
+## Loads pre-built ACS poststratification tables and constructs
+## county-level and state-level covariates for the MRP models.
+## Sourced by michigan-validation/01-prep-data-michigan.R and
+## ces-simulations/01-prep-ces.R.
 
 
 # Prepare Poststratification Table ----------------------------------------

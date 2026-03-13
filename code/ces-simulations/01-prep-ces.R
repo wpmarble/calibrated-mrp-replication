@@ -12,7 +12,7 @@ library(lme4)
 
 ## Poststrat table ----------------------------------------------------
 
-source("code/prep-poststrat-tables.R")
+source("code/prep-covariates.R")
 
 ## CCES ---------------------------------------------------------------
 
