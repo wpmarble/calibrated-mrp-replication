@@ -12,9 +12,8 @@ library(texreg)
 
 ## Parse command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
-REFIT <- "--refit" %in% args
 # N_SIMS: first non-flag argument, or 25 by default
-nsims_arg <- setdiff(args, "--refit")
+nsims_arg <- setdiff(args, "--no-refit")
 N_SIMS <- if (length(nsims_arg)) as.integer(nsims_arg[1]) else 25
 
 fit_on_pop <- FALSE  # population model not used in paper; extremely slow to fit

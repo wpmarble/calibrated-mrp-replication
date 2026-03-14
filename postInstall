@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+# Install cmdstan backend for brms
+Rscript -e "cmdstanr::install_cmdstan()"
+
+# Install calibratedMRP from GitHub
+Rscript -e "remotes::install_github('wpmarble/calibratedMRP')"

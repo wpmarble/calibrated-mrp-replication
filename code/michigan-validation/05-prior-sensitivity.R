@@ -9,7 +9,7 @@ TEST <- FALSE
 
 ## Parse command-line arguments for refit flag
 args <- commandArgs(trailingOnly = TRUE)
-RERUN <- "--refit" %in% args
+RERUN <- ! "--no-refit" %in% args
 
 set.seed(4052250) # from random.org
 

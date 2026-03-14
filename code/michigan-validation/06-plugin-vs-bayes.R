@@ -10,10 +10,6 @@ library(calibratedMRP)
 
 TEST <- FALSE
 
-## Parse command-line arguments for refit flag
-args <- commandArgs(trailingOnly = TRUE)
-RERUN <- "--refit" %in% args
-
 set.seed(4052250) # from random.org
 
 theme_set(theme_classic() + 

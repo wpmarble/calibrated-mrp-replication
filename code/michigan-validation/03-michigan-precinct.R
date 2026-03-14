@@ -18,7 +18,7 @@ set.seed(19104)
 
 ## Parse command-line arguments for refit flag
 args <- commandArgs(trailingOnly = TRUE)
-REFIT <- "--refit" %in% args
+REFIT <- ! "--no-refit" %in% args
 
 # rerun calibration or just load saved results?
 rerun <- REFIT

@@ -12,7 +12,7 @@ library(calibratedMRP)
 
 ## Parse command-line arguments for refit flag
 args <- commandArgs(trailingOnly = TRUE)
-REFIT <- "--refit" %in% args
+REFIT <- ! "--no-refit" %in% args
 
 source("code/michigan-validation/01-prep-data-michigan.R")
 
