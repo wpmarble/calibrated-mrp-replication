@@ -1,27 +1,27 @@
-# Replication Package
+# Replication Package for "Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities"
 
-## Overview
+This archive contains all code and data necessary to reproduce the results in "Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities," by William Marble and Josh Clinton (_Political Analysis_).
 
-**Paper:** "Improving Small-Area Estimates of Public Opinion by Calibrating to Known Population Quantities"
-**Authors:** William Marble and Joshua Clinton
-**Journal:** *Political Analysis* 
-**Date:** March 11, 2026
-
-This archive contains all code and data needed to reproduce the results in the paper.
+The methods proposed in the paper are implemented in a supplementary R package called [`calibratedMRP`](http://github.com/wpmarble/calibratedMRP),  available for download via Github.
 
 All code was originally written manually.  Claude Opus 4.6 assisted in refactoring some code to create this self-contained replication package.
 
 ## Data Availability
 
-| Data Source | Provided | Notes |
+(Available on Code Ocean but not uploaded to Github.)
+
+| Data Source | Provided | Path |
 |---|---|---|
-| SurveyMonkey 2022  Sample | Yes | `data/survey/CleanedSM_Weighted.rds` |
-| County-level election results | Yes | `data/elections/` |
+| SurveyMonkey 2022  Sample | Yes | `data/survey/CleanedSM_Weighted.rds` | 
+| County-level presidential election results, 2000-2020 | Yes | `data/elections/ElectionsCountyVote.rds` |
+| State-level presidential election results, 2000-2020 | Yes | `data/elections/ElectionsStateVote.rds` | 
+| County-level 2022 midterm results | Yes | `data/Elections/Elections2022-county.rds` | 
 | Michigan 2022 precinct results | Yes | `data/elections/MichiganPrecincts2022.csv` |
 | ACS 5-Year Estimates (poststratification tables) | Yes | `data/poststrat/` (pre-processed from IPUMS USA) |
 | County demographic data (NHGIS) | Yes | `data/census/nhgis*.csv` |
 | County/state FIPS lookups | Yes | `data/census/*-fips.csv` |
 | Cooperative Election Study (CES) | Downloaded on demand | Large files from Harvard Dataverse; see below |
+| ACS Microdata | No | Too large to redistribute; IPUMS codebook at `data/census/acs_micro_2020_cbk.txt` |
 | Frozen model fits | Yes | `data/frozen/` (pre-estimated `brms` model fits, can re-create if desired) |
 
 ### CES Data
@@ -33,15 +33,15 @@ CES files are too large to bundle. The script `code/download-ces-data.R` downloa
 - CCES 2022 Common Content: https://doi.org/10.7910/DVN/PR4L8P
 - CCES 2023 Common Content: https://doi.org/10.7910/DVN/JQJTCC
 
+
 ### Data Sources Not Included
 
 The following raw data sources were used to construct the processed datasets above. They are not required to run the replication but are documented for transparency.
 
-**ACS poststratification tables** (`data/poststrat/`): Built from IPUMS USA microdata (ACS 2016-2020 5-year estimates). Cross-tabulates age x race x gender x education at the state level (with detailed Hispanic coding) and county level (240 cells per county for Michigan). County allocation uses PUMA-to-county crosswalks with 2010 Census population-based allocation factors (`data/census/puma2010-to-county.csv`). Script: `code/00-build-poststrat-tables.R`. This script requires IPUMS microdata extract, which is not redistributed here. See `data/census/acs_micro_2020_cbk.txt` for the codebook from the extract.
+**ACS Microdata**: We used IPUMS USA microdata (ACS 2016-2020 5-year estimates) to generate poststratification tables. Cross-tabulates age x race x gender x education at the state and county level. County allocation uses PUMA-to-county crosswalks with 2010 Census population-based allocation factors (`data/census/puma2010-to-county.csv`). The script: `code/00-build-poststrat-tables.R` takes the IPUMS microdata extract, which is not redistributed here, and produces the poststratification tables. See `data/census/acs_micro_2020_cbk.txt` for the codebook from the extract. 
 
-**Election results** (`data/elections/`): Processed from MIT Election Data + Science Lab county presidential returns (https://doi.org/10.7910/DVN/VOQCHQ) and Michael McDonald turnout data (https://www.electproject.org). Michigan 2022 precinct results from Michigan Secretary of State (https://mielections.us/).
+**Raw election results**: We processed data from MIT Election Data + Science Lab [county presidential returns](https://doi.org/10.7910/DVN/VOQCHQ), Michael McDonald's [turnout data](https://www.electproject.org), and Michigan 2022 precinct results from Michigan Secretary of State [website](https://mielections.us/). We include the cleaned files in the replication archive.
 
-**Census demographics** (`data/census/nhgis*.csv`): ACS 2016-2020 5-year estimates from NHGIS (https://nhgis.org), Table B03002 (Hispanic/Latino origin by race).
 
 ## Computational Requirements
 
@@ -50,9 +50,9 @@ The following raw data sources were used to construct the processed datasets abo
 - **R packages:** The methods proposed in the paper are implemented in the `calibratedMRP`, available to install from GitHub: `wpmarble/calibratedMRP`. Other key packages: `brms`, `cmdstanr`, `tidyverse`, `kableExtra`, `fixest`, `texreg`. See `install.R` for the complete list. 
 - **Memory:** at least 16 GB RAM recommended
 - **Cores:** 4+ cores recommended
-- **Replication environment:** We last ran this archive on a Mac Studio with Apple Silicon M4 Max process and 64GB memory. Our runtime estimates are based on this environment.
+- **Replication environment:** We ran this replication package on a Mac Studio with Apple Silicon M4 Max process and 64GB memory, running MacOS 26.3 (Tahoe). Our runtime estimates are based on this environment.
 - **Estimated runtime:**
-  - Full replication includes `--refit` and `--nsims 25` flags. This re-estimates all models from data and runs CES simulations (Appendix I, 25 reps per configuration). This takes roughly 17-18 hours.
+  - Full replication includes `--refit` and `--nsims 25` flags. This re-estimates all models from data and runs CES simulations (Appendix I, 25 reps per configuration). Takes 17-18 hours.
   - With just `--refit` (re-estimate all Bayesian models, not including simulations): 2-3 hours
   - Default (frozen `brms` model fits): ~30 minutes
 
@@ -66,6 +66,8 @@ Rscript install.R
 
 ### 2. Run replication
 
+The `run.sh` script runs the replication files. We provide several options to partially reproduce portions of the results, detailed below.
+
 ```bash
 # Default: use frozen model fits, skip CES simulations
 ./run.sh
@@ -73,7 +75,8 @@ Rscript install.R
 # Re-estimate all Bayesian models from scratch, don't conduct simulations
 ./run.sh --refit
 
-# Full replication (re-estimate everything + simulations)
+# Full replication: re-estimate everything, including running
+# 25 simulations per param config, see Appendix I
 ./run.sh --refit --nsims 25
 ```
 
@@ -86,6 +89,10 @@ A log file is saved to `log/replication-log.txt`. Contains a list of R package v
 ### Frozen Model Fits
 
 By default, pre-estimated model fits in `data/frozen/` are used to avoid long computation times. Pass `--refit` to re-estimate all Bayesian models and overwrite `data/frozen`. Results should be substantively identical.
+
+### Full Paper
+
+The final revised version of the paper is saved in the `paper` directory. Nearly all numbers, tables, and figures in the paper are pulled into the draft dynamically from the `output` directory. 
 
 ## Code Description
 
