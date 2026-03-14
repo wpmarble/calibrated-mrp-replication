@@ -52,10 +52,9 @@ The following raw data sources were used to construct the processed datasets abo
 - **Cores:** 4+ cores recommended
 - **Replication environment:** We ran this replication package on a Mac Studio with Apple Silicon M4 Max process and 64GB memory, running MacOS 26.3 (Tahoe). Our runtime estimates are based on this environment.
 - **Estimated runtime:**
-  - Default: re-estimates all Bayesian models from scratch, uses frozen CES simulation results. Takes 4-8 hours.
-  - With `--no-refit` (use frozen model fits): ~30 minutes
-  - With `--nsims 25` (also run CES simulations, 25 reps per configuration): adds several days
-  - Full replication from scratch: `./code/run.sh --nsims 25` (~17-18 hours)
+  - Default: re-estimates all main-text models from scratch, but uses frozen CES simulation results. Takes 4-8 hours.
+  - With `--no-refit`: Uses frozen model fits instead of re-estimating them, then calibrates results using the methods in the paper. Takes ~30 minutes
+  - Full replication, including appendix simulations: `./code/run.sh --nsims 25` (~17-18 hours)
 
 ## Instructions
 
@@ -70,7 +69,7 @@ Rscript install.R
 The `code/run.sh` script runs the replication files. It automatically sets its working directory to the repository root regardless of where it is invoked from. We provide several options to partially reproduce portions of the results, detailed below.
 
 ```bash
-# Default: re-estimate all Bayesian models, use frozen CES simulation results
+# Default: re-estimate all Bayesian models, but use frozen CES simulation results
 ./code/run.sh
 
 # Quick verification: use frozen model fits, skip simulations (~30 min)
@@ -88,7 +87,7 @@ A log file is saved to `log/replication-log.txt`. Contains a list of R package v
 
 ### Frozen Model Fits
 
-Pre-estimated model fits are stored in `data/frozen/`. By default, all Bayesian models are re-estimated from scratch. Pass `--no-refit` to use the frozen fits instead (~30 minutes). CES simulation results (Appendix I) use frozen results by default; pass `--nsims N` to re-run simulations. Re-estimated results should be substantively identical to the frozen fits.
+Pre-estimated model fits are stored in `data/frozen/`. By default, all Bayesian models are re-estimated from scratch. Pass `--no-refit` to use the frozen fits instead, saving significant computation and time. CES simulation results (Appendix I) use frozen results by default; pass `--nsims N` to re-run simulations. Re-estimated results should be substantively identical to the frozen fits.
 
 ### Full Paper
 
