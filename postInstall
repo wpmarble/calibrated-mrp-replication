@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-# Install cmdstan backend for brms
-Rscript -e "cmdstanr::install_cmdstan()"
+# Install cmdstanr (not on CRAN — hosted on Stan R-universe)
+Rscript -e "install.packages('cmdstanr', repos = c('https://stan-dev.r-universe.dev', 'https://cloud.r-project.org'))"
 
-# Install calibratedMRP from GitHub
-Rscript -e "remotes::install_github('wpmarble/calibratedMRP')"
+# Install cmdstan backend
+Rscript -e "cmdstanr::install_cmdstan()"
